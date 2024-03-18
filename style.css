@@ -1,0 +1,23 @@
+body {
+  background-image: url(arkaplan.png);
+  background-size: cover;
+}
+
+h2 {
+  color: #AA5252;
+  text-align: center;
+  border: 5px solid rgb(255,200,150, 0.5);
+  cursor: pointer;
+}
+
+p {
+  color: orangered;
+  text-transform: uppercase;
+  line-height: 12px;
+  font-size: 80%;
+}
+
+li {
+  list-style: none;
+  display: inline-block;
+}
