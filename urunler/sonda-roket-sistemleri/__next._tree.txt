@@ -13,4 +13,4 @@
 :HL["/_next/static/media/caa3a2e1cccd8315-s.p.09~u27dqhyhd6.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["/_next/static/media/d03928121523449c-s.p.11t2izo0mqvpp.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["/_next/static/media/dc0c65e819e3bb6c-s.p.0fsjs_bs5qvt7.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"urunler","param":null,"prefetchHints":0,"slots":{"children":{"name":"sonda-roket-sistemleri","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"LR8pLfM9dQ6iM3sPc0ist"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"urunler","param":null,"prefetchHints":0,"slots":{"children":{"name":"sonda-roket-sistemleri","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"RU6WbTvzmyh_231a7x3bP"}
