@@ -226,12 +226,17 @@ async function loadPending() {
 
   const tb = $('#pendingTerms'); tb.textContent = '';
   if (!terms.length) tb.append(h('p', { class: 'empty' }, 'Önerilen kelime yok.'));
+  const line = (label, v) => v ? h('span', { class: 'small' }, h('b', { class: 'meta' }, label + ': '), v) : null;
   for (const t of terms) tb.append(h('div', { class: 'card' },
-    h('span', { class: 'meta' }, `${t.nick || 'anonim'} · ${when(t.created_at)}`),
+    h('span', { class: 'meta' }, `${t.nick || 'anonim'} · ${when(t.created_at)} · TDK ${t.has_tdk ? 'getirilmiş' : 'yok'} · Dil Derneği ${t.has_dd ? 'getirilmiş' : 'yok'}`),
     h('span', { class: 'big' }, t.word),
-    t.context ? h('span', { class: 'small' }, t.context) : null,
+    line('Köken', [t.origin_lang, t.origin_form].filter(Boolean).join(' ')),
+    line('Asıl anlamı', t.origin_meaning),
+    line('Biz ne anlamda kullanıyoruz', t.usage),
+    line('Önerisi', t.proposal),
+    line('Not', t.note || t.context),
     h('div', { class: 'btns' },
-      btn('Aç, düzenle ve yayınla', 'ok', async () => { await editTerm(t.id); $('#lookupBtn').click(); }),
+      btn('Aç, düzenle ve yayınla', 'ok', async () => { await editTerm(t.id); if (!lookup.tdk || !lookup.dd) $('#lookupBtn').click(); }),
       btn('Sil', 'no', () => { if (confirm(`“${t.word}” önerisi silinsin mi?`)) act(`/api/admin/terms/${t.id}`, null, 'DELETE'); }))));
 }
 
@@ -248,7 +253,7 @@ function propCard(p, pending) {
   const meaning = h('textarea', { maxlength: 300, placeholder: 'anlamı / kökü yok' }); meaning.value = p.meaning || '';
   const reason = h('textarea', { maxlength: 600, placeholder: 'gerekçe yok' }); reason.value = p.reason || '';
   const edits = () => ({ tr: tr.value, meaning: meaning.value, reason: reason.value });
-  const tags = [p.status === 'pending' && h('span', { class: 'tag pending' }, 'bekliyor'), p.pick ? h('span', { class: 'tag pick' }, 'seçilen') : null,
+  const tags = [p.status === 'pending' && h('span', { class: 'tag pending' }, 'bekliyor'), p.pick ? h('span', { class: 'tag pick' }, 'bunu kullan') : null,
     p.status === 'approved' ? h('span', { class: 'tag' }, `TDK ${p.has_tdk ? 'var' : 'yok'} · Dil Derneği ${p.has_dd ? 'var' : 'yok'}`) : null];
   return h('div', { class: 'card' },
     h('span', { class: 'meta' }, `${p.term_word ? p.term_word + ' · ' : ''}${p.nick || 'anonim'} · ${when(p.created_at)}${p.score != null ? ' · puan ' + p.score : ''}`, ...tags),
@@ -258,7 +263,7 @@ function propCard(p, pending) {
         ? [btn('Onayla', 'ok', () => { act(`/api/admin/proposals/${p.id}`, { status: 'approved', ...edits() }); tdkLater(p.id, tr.value); }),
            btn('Reddet', 'no', () => act(`/api/admin/proposals/${p.id}`, { status: 'rejected' }))]
         : [btn('Kaydet', '', () => { act(`/api/admin/proposals/${p.id}`, edits()); if (tr.value !== p.tr) tdkLater(p.id, tr.value); }),
-           btn(p.pick ? 'Seçileni kaldır' : 'Seçilen yap', p.pick ? 'on' : '', () => act(`/api/admin/proposals/${p.id}`, { pick: !p.pick })),
+           btn(p.pick ? 'Bunu kullan’dan çıkar' : 'Bunu kullan’a aktar', p.pick ? 'on' : '', () => act(`/api/admin/proposals/${p.id}`, { pick: !p.pick })),
            btn('Sözlüklerden getir', '', () => { act(`/api/admin/proposals/${p.id}/lookup`, {}); tdkLater(p.id, p.tr); }),
            btn('Yayından kaldır', '', () => act(`/api/admin/proposals/${p.id}`, { status: 'rejected' }))],
       btn('Sil', 'no', () => { if (confirm(`“${p.tr}” önerisi ve tüm tepkileri silinsin mi?`)) act(`/api/admin/proposals/${p.id}`, null, 'DELETE'); })));
@@ -281,7 +286,7 @@ async function editTerm(id, quiet) {
   const t = current.term, f = $('#termForm');
   for (const k of ['id', 'word', 'origin_lang', 'origin_form', 'origin_meaning', 'tdk_karsilik', 'usage', 'note']) f.elements[k].value = t[k] ?? '';
   f.elements.status.value = t.status === 'hidden' ? 'hidden' : 'approved';   // saving a suggested word publishes it
-  lookup = { tdk: t.tdk, dd: t.dd };
+  lookup = { tdk: t.tdk, dd: t.dd }; lookupWord = t.word;
   showLookup({ tdk: t.tdk, dd: t.dd, errors: {} }, true);
   renderTermProps();
   f.scrollIntoView({ behavior: 'smooth' });
@@ -298,11 +303,14 @@ function renderTermProps() {
 
 // ---------- lookup ----------
 let lookupRun = 0, tdkPending = null;   // tdkPending: TDK request still running for the word in the form
+let lookupWord = '';                     // the word `lookup` belongs to
 $('#lookupBtn').addEventListener('click', () => {
   const f = $('#termForm'), word = f.elements.word.value.trim();
   if (!word) { $('#lookupMsg').textContent = 'Önce kelimeyi yaz.'; return; }
   const run = ++lookupRun;
-  const r = { tdk: null, dd: null, errors: {}, waiting: { tdk: true, dd: true }, started: Date.now() };
+  const prev = lookupWord === word ? lookup : { tdk: null, dd: null };   // keep what we already have for this word
+  const r = { tdk: prev.tdk, dd: prev.dd, errors: {}, waiting: { tdk: !prev.tdk, dd: !prev.dd }, started: Date.now() };
+  lookupWord = word;
   $('#lookupMsg').textContent = '';
   const tick = setInterval(() => {
     if (run !== lookupRun || (!r.waiting.tdk && !r.waiting.dd)) { clearInterval(tick); return; }
@@ -321,13 +329,15 @@ $('#lookupBtn').addEventListener('click', () => {
     showLookup(r);
   };
   update();
-  withLimit(api('/api/admin/lookup?word=' + encodeURIComponent(word)), '15 sn içinde cevap vermedi')
+  if (r.waiting.dd) withLimit(api('/api/admin/lookup?word=' + encodeURIComponent(word)), '15 sn içinde cevap vermedi')
     .then(d => { r.dd = d.dd; r.ddGuess = d.guess; if (d.errors.dd) r.errors.dd = d.errors.dd; }, e => { r.errors.dd = e.message; })
     .finally(() => { r.waiting.dd = false; update(); });
-  const pending = tdkLookup(word)
-    .then(t => { r.tdk = t; return t; }, e => { r.errors.tdk = e.message; return undefined; })
-    .finally(() => { r.waiting.tdk = false; update(); if (tdkPending === pending) tdkPending = null; });
-  tdkPending = pending;
+  if (r.waiting.tdk) {
+    const pending = tdkLookup(word)
+      .then(t => { r.tdk = t; return t; }, e => { r.errors.tdk = e.message; return undefined; })
+      .finally(() => { r.waiting.tdk = false; update(); if (tdkPending === pending) tdkPending = null; });
+    tdkPending = pending;
+  }
 });
 
 function renderStatus(r) {
@@ -399,7 +409,7 @@ $('#clearBtn').addEventListener('click', () => {
   const f = $('#termForm'); f.reset(); f.elements.id.value = '';
   current = null; lookup = { tdk: null, dd: null };
   for (const id of ['#tdkBox', '#ddBox', '#ddManual']) $(id).hidden = true;
-  $('#lookupMsg').textContent = ''; $('#lookupStatus').hidden = true; lookupRun++; renderTermProps(); f.elements.word.focus();
+  $('#lookupMsg').textContent = ''; $('#lookupStatus').hidden = true; lookupRun++; lookupWord = ''; renderTermProps(); f.elements.word.focus();
 });
 
 const FOUND = { found: 'bulundu', none: 'kayıt yok', error: 'ulaşılamadı' };
