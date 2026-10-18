@@ -1,36 +1,240 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rahan Öztürk</title>
+<meta name="description" content="Rahan Öztürk — weather forecaster and PhD candidate at Istanbul Technical University.">
+<meta property="og:title" content="Rahan Öztürk">
+<meta property="og:description" content="Weather forecaster · PhD candidate, Istanbul Technical University">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#050810; --fg:#e8edf5; --mute:#8a96a8; --line:#1e2c4a; }
-  * { box-sizing:border-box; margin:0; }
-  html,body { height:100%; }
-  body { background:var(--bg); color:var(--fg); font-family:Inter,system-ui,sans-serif;
-         display:grid; place-items:center; padding:24px; }
-  main { width:100%; max-width:560px; }
-  .eyebrow { font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:var(--mute); }
-  h1 { font-family:"Chakra Petch",sans-serif; font-weight:500; font-size:clamp(36px,8vw,56px);
-       letter-spacing:.02em; margin:12px 0 40px; }
-  .label { font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:var(--mute);
-           border-top:1px solid var(--line); padding-top:20px; margin-bottom:4px; }
-  a.work { display:flex; justify-content:space-between; align-items:baseline; gap:16px;
-           padding:16px 0; border-bottom:1px solid var(--line); color:var(--fg); text-decoration:none; }
-  a.work strong { font-family:"Chakra Petch",sans-serif; font-weight:500; font-size:20px; letter-spacing:.04em; }
-  a.work span { color:var(--mute); font-size:14px; transition:color .15s; }
-  a.work:hover span { color:var(--fg); }
+  :root {
+    --black: #0a0a0a;
+    --white: #f4f2ee;
+    --ink-mute: #6f6c66;
+    --mute: #8d8a84;
+    --line: #262524;
+    --serif: "Instrument Serif", Georgia, serif;
+    --sans: Geist, system-ui, sans-serif;
+    --mono: "Geist Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--black); scroll-behavior: smooth; }
+  body { background: var(--black); color: var(--white); font: 300 16px/1.6 var(--sans);
+         -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  ::selection { background: var(--white); color: var(--black); }
+
+  /* ---------- split layout ---------- */
+  .page { display: grid; grid-template-columns: minmax(300px, 34%) 1fr; min-height: 100vh; }
+
+  .side { background: var(--white); color: var(--black); position: sticky; top: 0; height: 100vh;
+          display: flex; flex-direction: column; justify-content: space-between; padding: 48px 44px; }
+  .side .tag { font: 400 11px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-mute); }
+  .side h1 { font: 400 clamp(56px, 7.2vw, 112px)/.88 var(--serif); letter-spacing: -.02em; margin: 28px 0 32px; }
+  .side h1 em { display: block; }
+  .side .role { font-size: 15px; line-height: 1.5; max-width: 26ch; }
+  .side .role span { color: var(--ink-mute); }
+  .links { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+  .links a { display: flex; justify-content: space-between; text-decoration: none; padding: 9px 0;
+             border-top: 1px solid #d8d5cf; font-size: 14px; transition: padding .2s; }
+  .links li:last-child a { border-bottom: 1px solid #d8d5cf; }
+  .links a span:last-child { font-family: var(--mono); font-size: 12px; color: var(--ink-mute); }
+  .links a:hover { padding-left: 8px; }
+
+  /* ---------- content ---------- */
+  main { padding: 48px clamp(24px, 6vw, 96px) 96px; max-width: 980px; }
+  section { padding: 56px 0 8px; }
+  section:first-child { padding-top: 0; }
+  .label { font: 400 11px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--mute);
+           display: flex; gap: 16px; align-items: center; margin-bottom: 28px; }
+  .label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .lead { font: 400 clamp(26px, 3vw, 36px)/1.22 var(--serif); max-width: 30ch; }
+  .lead em { color: var(--mute); }
+  .about p + p { margin-top: 18px; color: #c9c6c0; max-width: 58ch; }
+
+  /* expandable rows */
+  details { border-top: 1px solid var(--line); }
+  details:last-of-type { border-bottom: 1px solid var(--line); }
+  summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 24px;
+            align-items: baseline; padding: 22px 16px; margin: 0 -16px; transition: background .25s, color .25s; }
+  summary::-webkit-details-marker { display: none; }
+  summary:hover, details[open] > summary { background: var(--white); color: var(--black); }
+  summary:hover .meta, details[open] > summary .meta { color: var(--ink-mute); }
+  .title { font: 400 clamp(22px, 2.4vw, 28px)/1.2 var(--serif); }
+  .meta { font: 400 12px/1.4 var(--mono); color: var(--mute); white-space: nowrap; transition: color .25s; }
+  .meta::after { content: "+"; display: inline-block; margin-left: 14px; width: 1ch; transition: transform .25s; }
+  details[open] > summary .meta::after { transform: rotate(45deg); }
+  .body { padding: 18px 0 28px; display: grid; gap: 14px; color: #c9c6c0; max-width: 62ch; }
+  .body .authors { font-size: 14px; color: var(--mute); }
+  .body .authors b { font-weight: 500; color: var(--white); }
+  .go { font: 400 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--white);
+        text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 4px; justify-self: start; }
+  .go:hover { color: var(--mute); }
+  .sub { list-style: none; display: grid; gap: 12px; }
+  .sub li { display: grid; grid-template-columns: 1fr auto; gap: 16px; }
+  .sub li span:last-child { font: 400 12px/1.6 var(--mono); color: var(--mute); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips span { font: 400 12px/1 var(--mono); border: 1px solid var(--line); padding: 7px 10px; }
+  .note { font: 400 12px/1.6 var(--mono); color: var(--mute); margin-top: 18px; }
+  .note a { color: var(--white); }
+
+  footer { margin-top: 96px; padding-top: 24px; border-top: 1px solid var(--line);
+           display: flex; justify-content: space-between; font: 400 12px/1 var(--mono); color: var(--mute); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+  /* ---------- mobile: white header on top, black content below ---------- */
+  @media (max-width: 860px) {
+    .page { grid-template-columns: 1fr; }
+    .side { position: static; height: auto; padding: 32px 16px 28px; gap: 40px; }
+    .side h1 { margin: 20px 0 20px; }
+    main { padding: 48px 16px 64px; }
+    summary { padding: 20px 12px; margin: 0 -12px; }
+    summary { grid-template-columns: 1fr; gap: 6px; }
+    .meta { white-space: normal; }
+    .title, .lead { overflow-wrap: anywhere; }
+    .sub li { grid-template-columns: 1fr; gap: 0; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <p class="eyebrow">Hoş geldiniz</p>
-  <h1>Rahan Öztürk</h1>
-  <p class="label">Yaptığım işler</p>
-  <a class="work" href="/deltav/"><strong>DELTAV</strong><span>Kurumsal web sitesi →</span></a>
-</main>
+<div class="page">
+
+  <aside class="side">
+    <div>
+      <p class="tag">Istanbul</p>
+      <h1>Rahan <em>Öztürk</em></h1>
+      <p class="role">Weather Forecaster<br><span>PhD Candidate, Istanbul Technical University</span></p>
+    </div>
+    <ul class="links">
+      <li><a href="https://www.linkedin.com/in/rahan-ozturk/" target="_blank" rel="noopener"><span>LinkedIn</span><span>↗</span></a></li>
+      <li><a href="https://x.com/havanoldu" target="_blank" rel="noopener"><span>X</span><span>@havanoldu ↗</span></a></li>
+      <li><a href="https://scholar.google.com/citations?user=vOzUji4AAAAJ" target="_blank" rel="noopener"><span>Google Scholar</span><span>↗</span></a></li>
+      <li><a href="https://orcid.org/0000-0003-3247-3227" target="_blank" rel="noopener"><span>ORCID</span><span>↗</span></a></li>
+    </ul>
+  </aside>
+
+  <main>
+
+    <section class="about" id="about">
+      <p class="label">About</p>
+      <p class="lead">I forecast the weather professionally and research the atmosphere as a PhD candidate. <em>I also build things for the web.</em></p>
+      <p>My research looks at how the atmosphere behaves, from local extremes to large-scale patterns. Outside the lab I build weather and web products, with a background in visual design and video.</p>
+    </section>
+
+    <section id="work">
+      <p class="label">Selected work</p>
+
+      <details>
+        <summary><span class="title">HavanOldu</span><span class="meta">Weather forecast platform</span></summary>
+        <div class="body">
+          <p>A weather analysis platform I develop, currently in progress. Also on X as @havanoldu.</p>
+          <a class="go" href="https://havanoldu.com" target="_blank" rel="noopener">Visit havanoldu.com ↗</a>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="title">DELTAV</span><span class="meta">Corporate website</span></summary>
+        <div class="body">
+          <p>Design and build of the corporate website for DELTAV Space Technologies.</p>
+          <a class="go" href="/deltav/">Open the site →</a>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="title">ITU Modelling</span><span class="meta">modelleme.itu.edu.tr</span></summary>
+        <div class="body">
+          <p>An automated system that publishes daily weather forecasts for the Marmara region, which I set up and run at Istanbul Technical University.</p>
+          <a class="go" href="http://modelleme.itu.edu.tr" target="_blank" rel="noopener">Visit the site ↗</a>
+        </div>
+      </details>
+    </section>
+
+    <section id="publications">
+      <p class="label">Peer-reviewed publications</p>
+
+      <details>
+        <summary><span class="title">The QBO, temperature and sunspots relationship</span><span class="meta">J. Earth Syst. Sci. · 2026</span></summary>
+        <div class="body">
+          <p class="authors"><b>R. Öztürk</b>, M. Helvacı</p>
+          <p>Journal of Earth System Science, 135(2), 83.</p>
+          <a class="go" href="https://doi.org/10.1007/s12040-026-02782-8" target="_blank" rel="noopener">Read the paper ↗</a>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="title">Climatological characteristics and genesis patterns of mesoscale atmospheric eddies over the Black Sea</span><span class="meta">Int. J. Climatol. · 2026</span></summary>
+        <div class="body">
+          <p class="authors"><b>R. Öztürk</b>, M. Kadıoğlu</p>
+          <p>International Journal of Climatology, 46(6), e70325.</p>
+          <a class="go" href="https://doi.org/10.1002/joc.70325" target="_blank" rel="noopener">Read the paper ↗</a>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="title">Investigating the future changes in the quasi-biennial oscillation periodicity under climate projections through wavelet analysis</span><span class="meta">Int. J. Global Warming · 2025</span></summary>
+        <div class="body">
+          <p class="authors">D. Demirhan, <b>R. Öztürk</b>, Y. S. Ünal</p>
+          <p>International Journal of Global Warming, 37(1), 27–38.</p>
+          <a class="go" href="https://doi.org/10.1504/ijgw.2025.148441" target="_blank" rel="noopener">Read the paper ↗</a>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="title">Evaluation of İstanbul air pollution in combating Covid-19</span><span class="meta">ISJAEE · 2021</span></summary>
+        <div class="body">
+          <p class="authors">B. Öztürk, İ. Çöl, <b>R. Öztürk</b>, U. Dinç, Y. Kara, Z. F. Ünal, H. Toros, A. Ulubey</p>
+          <p>Alternative Energy and Ecology (ISJAEE), 91–101.</p>
+          <a class="go" href="https://www.isjaee.com/jour/article/view/2012?locale=en_US" target="_blank" rel="noopener">Read the paper ↗</a>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="title">Lockdown effects on air pollution with meteorological conditions in Istanbul</span><span class="meta">ISJAEE · 2021</span></summary>
+        <div class="body">
+          <p class="authors">Z. F. Ünal, Y. Kara, U. Dinç, <b>R. Öztürk</b>, İ. Çöl, B. Öztürk, H. Toros, et al.</p>
+          <p>Alternative Energy and Ecology (ISJAEE), 77–90.</p>
+          <a class="go" href="https://scholar.google.com/scholar?cluster=8526989381217813302" target="_blank" rel="noopener">Find the paper ↗</a>
+        </div>
+      </details>
+
+      <p class="note">In review: <i>The Black Sea Coastal-Barrier Jet: identification of a new low-level wind system</i> (Monthly Weather Review).<br>Preprint: <a href="https://doi.org/10.2139/ssrn.7471123" target="_blank" rel="noopener">Orographic control on the location of extreme precipitation: the August 2021 Central Black Sea flood</a> (2026). Full list on <a href="https://scholar.google.com/citations?user=vOzUji4AAAAJ" target="_blank" rel="noopener">Google Scholar</a>.</p>
+    </section>
+
+    <section id="education">
+      <p class="label">Education</p>
+      <details>
+        <summary><span class="title">PhD Candidate</span><span class="meta">Istanbul Technical University</span></summary>
+        <div class="body">
+          <ul class="sub">
+            <li><span>Ph.D., Atmospheric Science — Istanbul Technical University</span><span>expected 2027</span></li>
+            <li><span>M.Sc., Atmospheric Science — Istanbul Technical University</span><span>2021</span></li>
+            <li><span>B.S., Meteorological Engineering — Istanbul Technical University</span><span>2019</span></li>
+          </ul>
+          <p>Thesis: <i>Analysis of Regional Atmospheric Systems over the Black Sea</i>, supervised by Prof. Dr. Mikdat Kadıoğlu.</p>
+        </div>
+      </details>
+    </section>
+
+    <section id="before">
+      <p class="label">Before science</p>
+      <details>
+        <summary><span class="title">Video editor &amp; designer</span><span class="meta">Agency work</span></summary>
+        <div class="body">
+          <p>Before turning to the atmosphere I worked as a professional video editor and designer at an agency, on campaigns for brands such as:</p>
+          <div class="chips"><span>Macrocenter</span><span>Migros</span><span>Kapital</span><span>Öykü</span></div>
+          <p>Tools of the trade:</p>
+          <div class="chips"><span>After Effects</span><span>Illustrator</span></div>
+        </div>
+      </details>
+    </section>
+
+    <footer><span>© 2026 Rahan Öztürk</span><a href="#about">Back to top ↑</a></footer>
+  </main>
+</div>
 </body>
 </html>
