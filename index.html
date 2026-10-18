@@ -4,237 +4,570 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rahan Öztürk</title>
-<meta name="description" content="Rahan Öztürk — weather forecaster and PhD candidate at Istanbul Technical University.">
+<meta name="description" content="Rahan Öztürk — weather forecaster and PhD candidate in atmospheric science at Istanbul Technical University.">
 <meta property="og:title" content="Rahan Öztürk">
 <meta property="og:description" content="Weather forecaster · PhD candidate, Istanbul Technical University">
+<meta name="theme-color" content="#0b0a0a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0a0a'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23a24451' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='16' r='4.5' fill='none' stroke='%23d8d3cc' stroke-width='1.5'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Geist:wght@300;400&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
   :root {
-    --black: #0a0a0a;
-    --white: #f4f2ee;
-    --ink-mute: #6f6c66;
-    --mute: #8d8a84;
-    --line: #262524;
-    --serif: "Instrument Serif", Georgia, serif;
+    --bg: #0b0a0a;
+    --text: #ece8e2;
+    --soft: #bcb6ae;
+    --mute: #857f78;
+    --line: rgba(236, 232, 226, .09);
+    --wine: #8e2f3b;
+    --wine-soft: #b4606b;
+    --ink: #161313;
+    --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
     --sans: Geist, system-ui, sans-serif;
     --mono: "Geist Mono", ui-monospace, monospace;
+    --panel: clamp(260px, 25vw, 340px);
+    interpolate-size: allow-keywords;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { background: var(--black); scroll-behavior: smooth; }
-  body { background: var(--black); color: var(--white); font: 300 16px/1.6 var(--sans);
-         -webkit-font-smoothing: antialiased; }
+  html { background: var(--bg); scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font: 300 16px/1.65 var(--sans);
+         -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
   a { color: inherit; }
-  ::selection { background: var(--white); color: var(--black); }
+  ::selection { background: var(--wine); color: var(--text); }
 
-  /* ---------- split layout ---------- */
-  .page { display: grid; grid-template-columns: minmax(300px, 34%) 1fr; min-height: 100vh; }
+  /* ---------- atmosphere ---------- */
+  #sky { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
+  .vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background:
+      radial-gradient(85% 75% at 65% 45%, transparent 30%, rgba(11,10,10,.45) 100%),
+      linear-gradient(90deg, transparent 0%, rgba(11,10,10,.28) 50%, rgba(11,10,10,.05) 100%); }
+  .grain { position: fixed; inset: -50%; z-index: 30; pointer-events: none; opacity: .07;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grain 1.2s steps(6) infinite; }
+  @keyframes grain {
+    0% { transform: translate(0, 0); } 20% { transform: translate(-3%, 2%); } 40% { transform: translate(2%, -3%); }
+    60% { transform: translate(-2%, -1%); } 80% { transform: translate(3%, 3%); } 100% { transform: translate(0, 0); } }
 
-  .side { background: var(--white); color: var(--black); position: sticky; top: 0; height: 100vh;
-          display: flex; flex-direction: column; justify-content: space-between; padding: 48px 44px; }
-  .side .tag { font: 400 11px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-mute); }
-  .side h1 { font: 400 clamp(56px, 7.2vw, 112px)/.88 var(--serif); letter-spacing: -.02em; margin: 28px 0 32px; }
-  .side h1 em { display: block; }
-  .side .role { font-size: 15px; line-height: 1.5; max-width: 26ch; }
-  .side .role span { color: var(--ink-mute); }
-  .links { list-style: none; display: flex; flex-direction: column; gap: 2px; }
-  .links a { display: flex; justify-content: space-between; text-decoration: none; padding: 9px 0;
-             border-top: 1px solid #d8d5cf; font-size: 14px; transition: padding .2s; }
-  .links li:last-child a { border-bottom: 1px solid #d8d5cf; }
-  .links a span:last-child { font-family: var(--mono); font-size: 12px; color: var(--ink-mute); }
-  .links a:hover { padding-left: 8px; }
+  .page { position: relative; z-index: 2; display: grid; grid-template-columns: var(--panel) 1fr; min-height: 100vh; }
+
+  /* ---------- side panel: fog over storm ---------- */
+  .side { position: sticky; top: 0; height: 100vh; overflow: hidden; color: var(--ink); isolation: isolate;
+          display: flex; flex-direction: column; justify-content: space-between; padding: 44px 32px 36px;
+          -webkit-backdrop-filter: blur(20px) saturate(.6); backdrop-filter: blur(20px) saturate(.6);
+          background: linear-gradient(180deg,
+            rgba(166,161,155,.93) 0%, rgba(142,137,132,.88) 30%, rgba(98,91,88,.84) 58%,
+            rgba(52,40,41,.86) 80%, rgba(24,17,18,.92) 100%); }
+  .side::before { content: ""; position: absolute; inset: -20%; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(40% 22% at 25% 18%, rgba(222,218,212,.55), transparent 70%),
+      radial-gradient(45% 25% at 85% 42%, rgba(120,114,110,.45), transparent 70%),
+      radial-gradient(60% 30% at 20% 78%, rgba(142,47,59,.42), transparent 70%),
+      radial-gradient(50% 20% at 90% 92%, rgba(90,24,32,.5), transparent 70%);
+    filter: blur(8px); animation: drift 38s ease-in-out infinite alternate; }
+  @keyframes drift { from { transform: translate3d(-4%, -2%, 0) rotate(-2deg); } to { transform: translate3d(4%, 3%, 0) rotate(2deg); } }
+  .side::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+    background: linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,.05) 60%, rgba(180,96,107,.4)); }
+
+  .eyebrow { font: 400 10.5px/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: rgba(22,19,19,.55); }
+  .name { font: 300 clamp(50px, 5.2vw, 76px)/.92 var(--serif); letter-spacing: -.01em; margin: 26px 0 26px; }
+  .name i { display: block; font-style: italic; font-weight: 300; padding-left: .5em; }
+  .role { font-size: 14px; line-height: 1.55; color: #2b2626; }
+  .role span { color: rgba(22,19,19,.6); }
+  .now { margin-top: 28px; font: 400 11px/1.7 var(--mono); color: rgba(22,19,19,.62); opacity: 0; transition: opacity 1.2s; }
+  .now.on { opacity: 1; }
+  .now b { font-weight: 400; color: #2b2626; }
+  .now .arrow { display: inline-block; }
+
+  .links { list-style: none; color: #ebe6df; }
+  .links a { display: flex; justify-content: space-between; align-items: baseline; text-decoration: none;
+             padding: 10px 0; border-top: 1px solid rgba(235,230,223,.16); font-size: 13.5px; transition: padding .3s, color .3s; }
+  .links li:last-child a { border-bottom: 1px solid rgba(235,230,223,.16); }
+  .links a span:last-child { font: 400 11px/1 var(--mono); color: rgba(235,230,223,.55); transition: color .3s; }
+  .links a:hover { padding-left: 6px; }
+  .links a:hover span:last-child { color: var(--wine-soft); }
 
   /* ---------- content ---------- */
-  main { padding: 48px clamp(24px, 6vw, 96px) 96px; max-width: 980px; }
-  section { padding: 56px 0 8px; }
+  main { padding: 64px clamp(24px, 7vw, 120px) 72px; max-width: 900px;
+         background: linear-gradient(90deg, rgba(11,10,10,.5) 0%, rgba(11,10,10,.38) 70%, rgba(11,10,10,0) 100%); }
+  section { padding: 64px 0 4px; }
   section:first-child { padding-top: 0; }
-  .label { font: 400 11px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--mute);
-           display: flex; gap: 16px; align-items: center; margin-bottom: 28px; }
-  .label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-  .lead { font: 400 clamp(26px, 3vw, 36px)/1.22 var(--serif); max-width: 30ch; }
-  .lead em { color: var(--mute); }
-  .about p + p { margin-top: 18px; color: #c9c6c0; max-width: 58ch; }
+  .label { font: 400 10.5px/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--mute);
+           display: flex; gap: 14px; align-items: center; margin-bottom: 26px; }
+  .label b { font-weight: 400; color: var(--wine-soft); }
+  .label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
+
+  .lead { font: 300 clamp(27px, 2.7vw, 36px)/1.22 var(--serif); max-width: 28ch; color: var(--text); }
+  .lead i { color: var(--soft); }
+  .body-text { margin-top: 22px; color: var(--soft); max-width: 54ch; font-size: 15.5px; }
 
   /* expandable rows */
-  details { border-top: 1px solid var(--line); }
+  details { border-top: 1px solid var(--line); position: relative; }
   details:last-of-type { border-bottom: 1px solid var(--line); }
+  details::before { content: ""; position: absolute; top: -1px; left: 0; height: 1px; width: 0;
+                    background: var(--wine-soft); transition: width .6s cubic-bezier(.2,.7,.2,1); }
+  details:hover::before, details[open]::before { width: 100%; }
   summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 24px;
-            align-items: baseline; padding: 22px 16px; margin: 0 -16px; transition: background .25s, color .25s; }
+            align-items: baseline; padding: 20px 0; transition: color .3s; }
   summary::-webkit-details-marker { display: none; }
-  summary:hover, details[open] > summary { background: var(--white); color: var(--black); }
-  summary:hover .meta, details[open] > summary .meta { color: var(--ink-mute); }
-  .title { font: 400 clamp(22px, 2.4vw, 28px)/1.2 var(--serif); }
-  .meta { font: 400 12px/1.4 var(--mono); color: var(--mute); white-space: nowrap; transition: color .25s; }
-  .meta::after { content: "+"; display: inline-block; margin-left: 14px; width: 1ch; transition: transform .25s; }
+  summary:focus-visible { outline: 1px solid var(--wine-soft); outline-offset: 4px; }
+  .t { transition: transform .45s cubic-bezier(.2,.7,.2,1); }
+  summary:hover .t, details[open] > summary .t { transform: translateX(8px); }
+  .meta { font: 400 10.5px/1.5 var(--mono); letter-spacing: .06em; color: var(--mute); white-space: nowrap; transition: color .3s; }
+  .meta::after { content: "+"; display: inline-block; margin-left: 14px; width: 1ch; transition: transform .4s; }
+  details[open] > summary .meta { color: var(--wine-soft); }
   details[open] > summary .meta::after { transform: rotate(45deg); }
-  .body { padding: 18px 0 28px; display: grid; gap: 14px; color: #c9c6c0; max-width: 62ch; }
-  .body .authors { font-size: 14px; color: var(--mute); }
-  .body .authors b { font-weight: 500; color: var(--white); }
-  .go { font: 400 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--white);
-        text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 4px; justify-self: start; }
-  .go:hover { color: var(--mute); }
-  .sub { list-style: none; display: grid; gap: 12px; }
-  .sub li { display: grid; grid-template-columns: 1fr auto; gap: 16px; }
-  .sub li span:last-child { font: 400 12px/1.6 var(--mono); color: var(--mute); }
+
+  details::details-content { block-size: 0; overflow: hidden; opacity: 0;
+    transition: block-size .5s cubic-bezier(.2,.7,.2,1), opacity .5s, content-visibility .5s allow-discrete; }
+  details[open]::details-content { block-size: auto; opacity: 1; }
+
+  .work .t { font: 400 clamp(25px, 2.4vw, 31px)/1.15 var(--serif); letter-spacing: .01em; }
+  .work .t small { font: italic 300 .62em var(--serif); color: var(--mute); margin-left: 10px; letter-spacing: 0; }
+  .pubs summary { padding: 16px 0; }
+  .pubs .t { font: 300 15px/1.55 var(--sans); color: #d9d4cd; max-width: 56ch; }
+  .pubs summary:hover .t, .pubs details[open] .t { color: var(--text); }
+
+  .body { padding: 6px 0 26px 8px; display: grid; gap: 12px; color: var(--soft); font-size: 15px; max-width: 60ch; }
+  .body .authors { font-size: 13.5px; color: var(--mute); }
+  .body .authors b { font-weight: 400; color: var(--text); }
+  .body .src { font: italic 300 18px/1.4 var(--serif); color: var(--soft); }
+  .go { font: 400 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--text);
+        text-decoration: none; justify-self: start; padding: 4px 0; border-bottom: 1px solid var(--wine); transition: color .3s, border-color .3s; }
+  .go:hover { color: var(--wine-soft); border-color: var(--wine-soft); }
+  .sub { list-style: none; display: grid; gap: 10px; }
+  .sub li { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: baseline; }
+  .sub li span:first-child { font: 400 19px/1.3 var(--serif); color: var(--text); }
+  .sub li span:first-child em { font-style: italic; color: var(--soft); }
+  .sub li span:last-child { font: 400 10.5px/1 var(--mono); color: var(--mute); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chips span { font: 400 12px/1 var(--mono); border: 1px solid var(--line); padding: 7px 10px; }
-  .note { font: 400 12px/1.6 var(--mono); color: var(--mute); margin-top: 18px; }
-  .note a { color: var(--white); }
+  .chips span { font: 400 11px/1 var(--mono); letter-spacing: .04em; border: 1px solid var(--line); padding: 8px 11px; color: var(--soft);
+                transition: border-color .3s, color .3s; }
+  .chips span:hover { border-color: var(--wine-soft); color: var(--text); }
+  .note { font: 300 13.5px/1.7 var(--sans); color: var(--mute); margin-top: 8px; }
+  .note:first-of-type { margin-top: 22px; }
+  .note i { font: italic 300 16px var(--serif); color: var(--soft); }
+  .note a { color: var(--soft); text-decoration-color: var(--wine); text-underline-offset: 3px; }
+  .note a:hover { color: var(--text); }
+  .note span { font: 400 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--wine-soft); margin-right: 8px; }
 
-  footer { margin-top: 96px; padding-top: 24px; border-top: 1px solid var(--line);
-           display: flex; justify-content: space-between; font: 400 12px/1 var(--mono); color: var(--mute); }
+  footer { margin-top: 110px; padding-top: 22px; border-top: 1px solid var(--line);
+           display: flex; justify-content: space-between; gap: 24px; font: 400 10.5px/1.7 var(--mono); color: var(--mute); }
+  footer a { text-decoration: none; }
+  footer a:hover { color: var(--text); }
 
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+  /* entrance */
+  .rise { opacity: 0; transform: translateY(14px); animation: rise 1.1s cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
 
-  /* ---------- mobile: white header on top, black content below ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    .rise { opacity: 1; transform: none; }
+  }
+
+  /* ---------- small screens: panel becomes a header ---------- */
   @media (max-width: 860px) {
     .page { grid-template-columns: 1fr; }
-    .side { position: static; height: auto; padding: 32px 16px 28px; gap: 40px; }
-    .side h1 { margin: 20px 0 20px; }
-    main { padding: 48px 16px 64px; }
-    summary { padding: 20px 12px; margin: 0 -12px; }
+    .side { position: relative; height: auto; padding: 32px 16px 24px; gap: 36px;
+            background: linear-gradient(180deg, rgba(166,161,155,.93) 0%, rgba(140,135,130,.9) 58%, rgba(66,48,50,.9) 78%, rgba(28,19,20,.94) 100%); }
+    main { background: rgba(11,10,10,.4); }
+    .side::after { top: auto; left: 0; width: auto; height: 1px; }
+    .name { margin: 18px 0 18px; font-size: 54px; }
+    .now { margin-top: 18px; }
+    main { padding: 52px 16px 56px; }
     summary { grid-template-columns: 1fr; gap: 6px; }
+    summary:hover .t, details[open] > summary .t { transform: none; }
     .meta { white-space: normal; }
-    .title, .lead { overflow-wrap: anywhere; }
-    .sub li { grid-template-columns: 1fr; gap: 0; }
+    .body { padding-left: 0; }
+    .sub li { grid-template-columns: 1fr; gap: 2px; }
+    footer { flex-direction: column; gap: 6px; }
   }
 </style>
 </head>
 <body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
 <div class="page">
 
   <aside class="side">
     <div>
-      <p class="tag">Istanbul</p>
-      <h1>Rahan <em>Öztürk</em></h1>
-      <p class="role">Weather Forecaster<br><span>PhD Candidate, Istanbul Technical University</span></p>
+      <p class="eyebrow rise" style="animation-delay:.1s">41.0° N &nbsp;·&nbsp; 29.0° E</p>
+      <h1 class="name rise" style="animation-delay:.25s">Rahan <i>Öztürk</i></h1>
+      <p class="role rise" style="animation-delay:.45s">Weather Forecaster<br><span>PhD Candidate, Atmospheric Science<br>Istanbul Technical University</span></p>
+      <p class="now" id="now" aria-live="polite"></p>
     </div>
-    <ul class="links">
+    <ul class="links rise" style="animation-delay:.6s">
       <li><a href="https://www.linkedin.com/in/rahan-ozturk/" target="_blank" rel="noopener"><span>LinkedIn</span><span>↗</span></a></li>
       <li><a href="https://x.com/havanoldu" target="_blank" rel="noopener"><span>X</span><span>@havanoldu ↗</span></a></li>
-      <li><a href="https://scholar.google.com/citations?user=vOzUji4AAAAJ" target="_blank" rel="noopener"><span>Google Scholar</span><span>↗</span></a></li>
       <li><a href="https://orcid.org/0000-0003-3247-3227" target="_blank" rel="noopener"><span>ORCID</span><span>↗</span></a></li>
     </ul>
   </aside>
 
   <main>
 
-    <section class="about" id="about">
-      <p class="label">About</p>
-      <p class="lead">I forecast the weather professionally and research the atmosphere as a PhD candidate. <em>I also build things for the web.</em></p>
-      <p>My research looks at how the atmosphere behaves, from local extremes to large-scale patterns. Outside the lab I build weather and web products, with a background in visual design and video.</p>
+    <section class="about rise" id="about" style="animation-delay:.5s">
+      <p class="label"><b>01</b> About</p>
+      <p class="lead">I forecast the weather for a living, and study the atmosphere as a doctoral researcher. <i>Sometimes I build things for the web.</i></p>
+      <p class="body-text">My research follows how air moves over the Black Sea, from local extremes to large-scale patterns. Alongside it I build weather and web products, drawing on an earlier life in visual design and film editing.</p>
     </section>
 
-    <section id="work">
-      <p class="label">Selected work</p>
+    <section class="work rise" id="work" style="animation-delay:.65s">
+      <p class="label"><b>02</b> Selected work</p>
 
       <details>
-        <summary><span class="title">HavanOldu</span><span class="meta">Weather forecast platform</span></summary>
+        <summary><span class="t">HavanOldu <small>weather</small></span><span class="meta">Weather platform</span></summary>
         <div class="body">
-          <p>A weather analysis platform I develop, currently in progress. Also on X as @havanoldu.</p>
-          <a class="go" href="https://havanoldu.com" target="_blank" rel="noopener">Visit havanoldu.com ↗</a>
+          <p>A weather analysis platform I am developing, currently in progress. Daily notes on the weather also go out on X as @havanoldu.</p>
+          <a class="go" href="https://havanoldu.com" target="_blank" rel="noopener">havanoldu.com ↗</a>
         </div>
       </details>
 
       <details>
-        <summary><span class="title">DELTAV</span><span class="meta">Corporate website</span></summary>
+        <summary><span class="t">DELTAV <small>space</small></span><span class="meta">Corporate website</span></summary>
         <div class="body">
           <p>Design and build of the corporate website for DELTAV Space Technologies.</p>
           <a class="go" href="/deltav/">Open the site →</a>
         </div>
       </details>
-
-      <details>
-        <summary><span class="title">ITU Modelling</span><span class="meta">modelleme.itu.edu.tr</span></summary>
-        <div class="body">
-          <p>An automated system that publishes daily weather forecasts for the Marmara region, which I set up and run at Istanbul Technical University.</p>
-          <a class="go" href="http://modelleme.itu.edu.tr" target="_blank" rel="noopener">Visit the site ↗</a>
-        </div>
-      </details>
     </section>
 
-    <section id="publications">
-      <p class="label">Peer-reviewed publications</p>
+    <section class="pubs rise" id="publications" style="animation-delay:.8s">
+      <p class="label"><b>03</b> Peer-reviewed publications</p>
 
       <details>
-        <summary><span class="title">The QBO, temperature and sunspots relationship</span><span class="meta">J. Earth Syst. Sci. · 2026</span></summary>
-        <div class="body">
-          <p class="authors"><b>R. Öztürk</b>, M. Helvacı</p>
-          <p>Journal of Earth System Science, 135(2), 83.</p>
-          <a class="go" href="https://doi.org/10.1007/s12040-026-02782-8" target="_blank" rel="noopener">Read the paper ↗</a>
-        </div>
-      </details>
-
-      <details>
-        <summary><span class="title">Climatological characteristics and genesis patterns of mesoscale atmospheric eddies over the Black Sea</span><span class="meta">Int. J. Climatol. · 2026</span></summary>
+        <summary><span class="t">Climatological characteristics and genesis patterns of mesoscale atmospheric eddies over the Black Sea</span><span class="meta">IJOC · 2026</span></summary>
         <div class="body">
           <p class="authors"><b>R. Öztürk</b>, M. Kadıoğlu</p>
-          <p>International Journal of Climatology, 46(6), e70325.</p>
+          <p class="src">International Journal of Climatology, 46(6), e70325</p>
           <a class="go" href="https://doi.org/10.1002/joc.70325" target="_blank" rel="noopener">Read the paper ↗</a>
         </div>
       </details>
 
       <details>
-        <summary><span class="title">Investigating the future changes in the quasi-biennial oscillation periodicity under climate projections through wavelet analysis</span><span class="meta">Int. J. Global Warming · 2025</span></summary>
+        <summary><span class="t">The QBO, temperature and sunspots relationship</span><span class="meta">JESS · 2026</span></summary>
+        <div class="body">
+          <p class="authors"><b>R. Öztürk</b>, M. Helvacı</p>
+          <p class="src">Journal of Earth System Science, 135(2), 83</p>
+          <a class="go" href="https://doi.org/10.1007/s12040-026-02782-8" target="_blank" rel="noopener">Read the paper ↗</a>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="t">Investigating the future changes in the quasi-biennial oscillation periodicity under climate projections through wavelet analysis</span><span class="meta">IJGW · 2025</span></summary>
         <div class="body">
           <p class="authors">D. Demirhan, <b>R. Öztürk</b>, Y. S. Ünal</p>
-          <p>International Journal of Global Warming, 37(1), 27–38.</p>
+          <p class="src">International Journal of Global Warming, 37(1), 27–38</p>
           <a class="go" href="https://doi.org/10.1504/ijgw.2025.148441" target="_blank" rel="noopener">Read the paper ↗</a>
         </div>
       </details>
 
       <details>
-        <summary><span class="title">Evaluation of İstanbul air pollution in combating Covid-19</span><span class="meta">ISJAEE · 2021</span></summary>
+        <summary><span class="t">Evaluation of İstanbul air pollution in combating Covid-19</span><span class="meta">ISJAEE · 2021</span></summary>
         <div class="body">
           <p class="authors">B. Öztürk, İ. Çöl, <b>R. Öztürk</b>, U. Dinç, Y. Kara, Z. F. Ünal, H. Toros, A. Ulubey</p>
-          <p>Alternative Energy and Ecology (ISJAEE), 91–101.</p>
+          <p class="src">Alternative Energy and Ecology (ISJAEE), 91–101</p>
           <a class="go" href="https://www.isjaee.com/jour/article/view/2012?locale=en_US" target="_blank" rel="noopener">Read the paper ↗</a>
         </div>
       </details>
 
       <details>
-        <summary><span class="title">Lockdown effects on air pollution with meteorological conditions in Istanbul</span><span class="meta">ISJAEE · 2021</span></summary>
+        <summary><span class="t">Lockdown effects on air pollution with meteorological conditions in Istanbul</span><span class="meta">ISJAEE · 2021</span></summary>
         <div class="body">
           <p class="authors">Z. F. Ünal, Y. Kara, U. Dinç, <b>R. Öztürk</b>, İ. Çöl, B. Öztürk, H. Toros, et al.</p>
-          <p>Alternative Energy and Ecology (ISJAEE), 77–90.</p>
+          <p class="src">Alternative Energy and Ecology (ISJAEE), 77–90</p>
           <a class="go" href="https://scholar.google.com/scholar?cluster=8526989381217813302" target="_blank" rel="noopener">Find the paper ↗</a>
         </div>
       </details>
 
-      <p class="note">In review: <i>The Black Sea Coastal-Barrier Jet: identification of a new low-level wind system</i> (Monthly Weather Review).<br>Preprint: <a href="https://doi.org/10.2139/ssrn.7471123" target="_blank" rel="noopener">Orographic control on the location of extreme precipitation: the August 2021 Central Black Sea flood</a> (2026). Full list on <a href="https://scholar.google.com/citations?user=vOzUji4AAAAJ" target="_blank" rel="noopener">Google Scholar</a>.</p>
+      <p class="note"><span>In review</span><i>The Black Sea Coastal-Barrier Jet: identification of a new low-level wind system</i> — Monthly Weather Review</p>
+      <p class="note"><span>Preprint</span><a href="https://doi.org/10.2139/ssrn.7471123" target="_blank" rel="noopener">Orographic control on the location of extreme precipitation: the August 2021 Central Black Sea flood</a></p>
+      <p class="note"><span>All</span><a href="https://orcid.org/0000-0003-3247-3227" target="_blank" rel="noopener">Full record on ORCID</a></p>
     </section>
 
-    <section id="education">
-      <p class="label">Education</p>
+    <section class="work rise" id="education" style="animation-delay:.95s">
+      <p class="label"><b>04</b> Education</p>
       <details>
-        <summary><span class="title">PhD Candidate</span><span class="meta">Istanbul Technical University</span></summary>
+        <summary><span class="t">PhD Candidate <small>atmospheric science</small></span><span class="meta">Istanbul Technical University</span></summary>
         <div class="body">
           <ul class="sub">
-            <li><span>Ph.D., Atmospheric Science — Istanbul Technical University</span><span>expected 2027</span></li>
-            <li><span>M.Sc., Atmospheric Science — Istanbul Technical University</span><span>2021</span></li>
-            <li><span>B.S., Meteorological Engineering — Istanbul Technical University</span><span>2019</span></li>
+            <li><span>Ph.D., <em>Atmospheric Science</em></span><span>expected 2027</span></li>
+            <li><span>M.Sc., <em>Atmospheric Science</em></span><span>2021</span></li>
+            <li><span>B.S., <em>Meteorological Engineering</em></span><span>2019</span></li>
           </ul>
-          <p>Thesis: <i>Analysis of Regional Atmospheric Systems over the Black Sea</i>, supervised by Prof. Dr. Mikdat Kadıoğlu.</p>
+          <p>All at Istanbul Technical University. Thesis: <i>Analysis of Regional Atmospheric Systems over the Black Sea</i>, supervised by Prof. Dr. Mikdat Kadıoğlu.</p>
         </div>
       </details>
     </section>
 
-    <section id="before">
-      <p class="label">Before science</p>
+    <section class="work rise" id="before" style="animation-delay:1.1s">
+      <p class="label"><b>05</b> Another life</p>
       <details>
-        <summary><span class="title">Video editor &amp; designer</span><span class="meta">Agency work</span></summary>
+        <summary><span class="t">Film &amp; design <small>advertising</small></span><span class="meta">Now a hobby</span></summary>
         <div class="body">
-          <p>Before turning to the atmosphere I worked as a professional video editor and designer at an agency, on campaigns for brands such as:</p>
+          <p>For four years I stepped away from meteorology and worked professionally in advertising and social media, as a video editor and designer at an agency. Campaigns for brands including:</p>
           <div class="chips"><span>Macrocenter</span><span>Migros</span><span>Kapital</span><span>Öykü</span></div>
-          <p>Tools of the trade:</p>
-          <div class="chips"><span>After Effects</span><span>Illustrator</span></div>
+          <p>Today I keep editing and design as hobbies. My focus is meteorology.</p>
+          <div class="chips"><span>After Effects</span><span>Premiere Pro</span><span>Illustrator</span></div>
         </div>
       </details>
     </section>
 
-    <footer><span>© 2026 Rahan Öztürk</span><a href="#about">Back to top ↑</a></footer>
+    <footer>
+      <span>© 2026 Rahan Öztürk</span>
+      <span id="credit">Background: a pressure field drifting over the page.</span>
+      <a href="#about">Top ↑</a>
+    </footer>
   </main>
 </div>
+
+<script>
+/*
+  Atmosphere: a small, divergence-free flow built from a stream function.
+  Lows (cyclonic, counter-clockwise) and highs drift slowly; a meandering jet
+  crosses the page; the mean flow follows the current wind in Istanbul.
+  Isobars are contours of the same field, so the wind runs along them.
+  Inspired by Viégas & Wattenberg's Wind Map.
+*/
+(() => {
+  const cv = document.getElementById('sky');
+  const ctx = cv.getContext('2d');
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fine = matchMedia('(pointer: fine)').matches;
+  const TRAIL = 22, SAMPLE = 1 / 30;
+  let sampleAcc = 0;
+  let W, H, L, dpr, parts, vortices, t = 0;
+  const mean = { u: 14, v: -4, target: { u: 14, v: -4 } };
+  const jet = { y: .26, a: .05, k: 2.2, w: .07, A: 26, ph: 0 };
+  const mouse = { x: -1e4, y: -1e4, s: 0 };
+
+  const rnd = (a, b) => a + Math.random() * (b - a);
+
+  function makeVortices() {
+    const spec = [
+      { x: .62, y: .55, r: .22, c: 120 },   // deep low
+      { x: .30, y: .80, r: .18, c: -80 },   // high
+      { x: .88, y: .22, r: .16, c: 90 },    // low
+      { x: .15, y: .30, r: .20, c: -70 },   // high
+      { x: .80, y: .88, r: .13, c: 70 },    // small low, an eddy
+      { x: .45, y: .15, r: .12, c: -55 },
+    ];
+    return spec.map(s => ({ x: s.x * W, y: s.y * H, r: s.r * L, c: s.c, c0: s.c,
+      dx: rnd(-3, 3), dy: rnd(-2, 2), p: rnd(0, 6.28) }));
+  }
+
+  // Velocity from psi: u = dpsi/dy, v = -dpsi/dx (screen y points down,
+  // so positive c turns counter-clockwise on screen, like a northern low).
+  function vel(x, y) {
+    let u = mean.u, v = mean.v;
+    for (let i = 0; i < vortices.length; i++) {
+      const o = vortices[i], dx = x - o.x, dy = y - o.y;
+      const e = Math.exp(-(dx * dx + dy * dy) / (2 * o.r * o.r)) * o.c / o.r;
+      u += e * dy; v -= e * dx;
+    }
+    const s = jet.k * x / L + jet.ph;
+    const eta = (y - jet.y * H - jet.a * L * Math.sin(s)) / (jet.w * L);
+    const ch = Math.cosh(eta), sech2 = 1 / (ch * ch);
+    u += jet.A * sech2;
+    v += jet.A * sech2 * jet.a * jet.k * Math.cos(s);
+    if (mouse.s > .01) {
+      const dx = x - mouse.x, dy = y - mouse.y, r = 110;
+      const e = Math.exp(-(dx * dx + dy * dy) / (2 * r * r)) * 160 * mouse.s / r;
+      u += e * dy; v -= e * dx;
+    }
+    return [u, v];
+  }
+
+  // The same stream function, used as pressure for isobars and H/L labels.
+  function psi(x, y) {
+    let p = mean.u * y - mean.v * x;
+    for (let i = 0; i < vortices.length; i++) {
+      const o = vortices[i], dx = x - o.x, dy = y - o.y;
+      p -= o.c * o.r * Math.exp(-(dx * dx + dy * dy) / (2 * o.r * o.r));
+    }
+    const s = jet.k * x / L + jet.ph;
+    p += jet.A * jet.w * L * Math.tanh((y - jet.y * H - jet.a * L * Math.sin(s)) / (jet.w * L));
+    return p;
+  }
+
+  function spawn(p, i) {
+    const x = Math.random() * W, y = Math.random() * H;
+    for (let k = 0; k < TRAIL; k++) { p.xs[k] = x; p.ys[k] = y; }
+    p.age = 0; p.life = rnd(60, 150) | 0; p.wine = i % 11 === 0;
+  }
+
+  function resize() {
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight; L = Math.min(W, H) * .9 + Math.max(W, H) * .1;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    vortices = makeVortices();
+    const mr = mainEl.getBoundingClientRect(), cs = getComputedStyle(mainEl);
+    textCol = W < 860 ? [-1, W + 1] : [mr.left + parseFloat(cs.paddingLeft) - 40, mr.right - parseFloat(cs.paddingRight) + 40];
+    const n = Math.min(1700, Math.round(W * H / (W < 700 ? 1500 : 1300)));
+    parts = Array.from({ length: n }, (_, i) => {
+      const p = { xs: new Float32Array(TRAIL), ys: new Float32Array(TRAIL) };
+      spawn(p, i); p.age = rnd(0, p.life) | 0; return p;
+    });
+  }
+
+  // The head moves every frame; the trail takes a new sample at a fixed rate.
+  function stepParticles(dt) {
+    sampleAcc += dt;
+    const shift = sampleAcc >= SAMPLE;
+    if (shift) sampleAcc %= SAMPLE;
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i];
+      if (shift) {
+        for (let k = TRAIL - 1; k > 0; k--) { p.xs[k] = p.xs[k - 1]; p.ys[k] = p.ys[k - 1]; }
+        if (++p.age > p.life) { spawn(p, i); continue; }
+      }
+      const [u, v] = vel(p.xs[0], p.ys[0]);
+      p.xs[0] += u * dt; p.ys[0] += v * dt;
+      if (p.xs[0] < -20 || p.xs[0] > W + 20 || p.ys[0] < -20 || p.ys[0] > H + 20) spawn(p, i);
+    }
+  }
+
+  function stepField(dt) {
+    t += dt;
+    jet.ph += dt * .035;
+    mean.u += (mean.target.u - mean.u) * Math.min(1, dt * .4);
+    mean.v += (mean.target.v - mean.v) * Math.min(1, dt * .4);
+    for (const o of vortices) {
+      o.x += (o.dx + mean.u * .25) * dt; o.y += (o.dy + mean.v * .25) * dt;
+      o.c = o.c0 * (1 + .25 * Math.sin(t * .15 + o.p));
+      const m = o.r * 1.5;
+      if (o.x > W + m) o.x = -m; if (o.x < -m) o.x = W + m;
+      if (o.y > H + m) o.y = -m; if (o.y < -m) o.y = H + m;
+    }
+    mouse.s *= Math.pow(.35, dt);
+  }
+
+  // Isobars by marching squares over psi.
+  const LEVELS = 16;
+  function drawIsobars() {
+    const g = W < 700 ? 22 : 18, cols = Math.ceil(W / g) + 1, rows = Math.ceil(H / g) + 1;
+    const f = new Float32Array(cols * rows);
+    let lo = Infinity, hi = -Infinity;
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const val = psi(i * g, j * g); f[j * cols + i] = val;
+      if (val < lo) lo = val; if (val > hi) hi = val;
+    }
+    const step = (hi - lo) / LEVELS;
+    ctx.beginPath();
+    for (let j = 0; j < rows - 1; j++) for (let i = 0; i < cols - 1; i++) {
+      const a = f[j * cols + i], b = f[j * cols + i + 1], c = f[(j + 1) * cols + i + 1], d = f[(j + 1) * cols + i];
+      const mn = Math.min(a, b, c, d), mx = Math.max(a, b, c, d);
+      const x = i * g, y = j * g;
+      for (let lv = Math.ceil((mn - lo) / step) * step + lo; lv < mx; lv += step) {
+        const pts = [];
+        if ((a < lv) !== (b < lv)) pts.push(x + g * (lv - a) / (b - a), y);
+        if ((b < lv) !== (c < lv)) pts.push(x + g, y + g * (lv - b) / (c - b));
+        if ((d < lv) !== (c < lv)) pts.push(x + g * (lv - d) / (c - d), y + g);
+        if ((a < lv) !== (d < lv)) pts.push(x, y + g * (lv - a) / (d - a));
+        if (pts.length >= 4) { ctx.moveTo(pts[0], pts[1]); ctx.lineTo(pts[2], pts[3]); }
+        if (pts.length === 8) { ctx.moveTo(pts[4], pts[5]); ctx.lineTo(pts[6], pts[7]); }
+      }
+    }
+    ctx.strokeStyle = 'rgba(236,232,226,.075)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    return { lo, hi };
+  }
+
+  const mainEl = document.querySelector('main');
+  let textCol = [0, 0];
+  function drawLabels(range) {
+    ctx.textAlign = 'center';
+    for (const o of vortices) {
+      if (o.x < 30 || o.x > W - 30 || o.y < 30 || o.y > H - 30) continue;
+      if (o.x > textCol[0] && o.x < textCol[1]) continue;
+      const low = o.c0 > 0;
+      const hpa = Math.round(1013 + 22 * ((psi(o.x, o.y) - range.lo) / (range.hi - range.lo) - .5));
+      ctx.fillStyle = low ? 'rgba(180,96,107,.55)' : 'rgba(236,232,226,.28)';
+      ctx.font = 'italic 300 26px "Cormorant Garamond", Georgia, serif';
+      ctx.fillText(low ? 'L' : 'H', o.x, o.y + 6);
+      ctx.fillStyle = 'rgba(236,232,226,.22)';
+      ctx.font = '400 9px "Geist Mono", ui-monospace, monospace';
+      ctx.fillText(hpa, o.x, o.y + 22);
+    }
+  }
+
+  // Trails drawn in alpha groups, head bright and tail fading; one stroke per group.
+  const GROUPS = 5;
+  function drawParticles() {
+    ctx.lineCap = 'round';
+    const per = (TRAIL - 1) / GROUPS;
+    for (let pass = 0; pass < 2; pass++) {
+      const wine = pass === 1;
+      for (let gi = 0; gi < GROUPS; gi++) {
+        const k0 = Math.floor(gi * per), k1 = Math.floor((gi + 1) * per);
+        ctx.beginPath();
+        for (let i = 0; i < parts.length; i++) {
+          const p = parts[i];
+          if (p.wine !== wine || p.age < 2) continue;
+          ctx.moveTo(p.xs[k0], p.ys[k0]);
+          for (let k = k0 + 1; k <= k1; k++) ctx.lineTo(p.xs[k], p.ys[k]);
+        }
+        const a = Math.pow(1 - gi / GROUPS, 1.4) * (wine ? .5 : .3);
+        ctx.strokeStyle = wine ? `rgba(180,74,88,${a})` : `rgba(236,232,226,${a})`;
+        ctx.lineWidth = wine ? 1.1 : .8;
+        ctx.stroke();
+      }
+    }
+  }
+
+  function frame() {
+    ctx.clearRect(0, 0, W, H);
+    const range = drawIsobars();
+    drawParticles();
+    drawLabels(range);
+  }
+
+  let last = 0;
+  function loop(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    stepField(dt);
+    stepParticles(dt);
+    frame();
+    requestAnimationFrame(loop);
+  }
+
+  function renderStill() {
+    for (let s = 0; s < TRAIL + 40; s++) stepParticles(SAMPLE);
+    frame();
+  }
+
+  resize();
+  addEventListener('resize', () => { resize(); if (still) renderStill(); });
+  if (fine && !still) addEventListener('pointermove', e => {
+    mouse.x = e.clientX; mouse.y = e.clientY; mouse.s = Math.min(1, mouse.s + .08);
+  }, { passive: true });
+
+  if (still) document.fonts.ready.then(renderStill);
+  else requestAnimationFrame(t0 => { last = t0; requestAnimationFrame(loop); });
+
+  // Current weather in Istanbul steers the mean flow.
+  const WX = { 0: 'clear sky', 1: 'mainly clear', 2: 'partly cloudy', 3: 'overcast', 45: 'fog', 48: 'rime fog',
+    51: 'light drizzle', 53: 'drizzle', 55: 'heavy drizzle', 56: 'freezing drizzle', 57: 'freezing drizzle',
+    61: 'light rain', 63: 'rain', 65: 'heavy rain', 66: 'freezing rain', 67: 'freezing rain',
+    71: 'light snow', 73: 'snow', 75: 'heavy snow', 77: 'snow grains', 80: 'rain showers', 81: 'rain showers',
+    82: 'violent showers', 85: 'snow showers', 86: 'snow showers', 95: 'thunderstorm', 96: 'thunderstorm, hail', 99: 'thunderstorm, hail' };
+  const DIRS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=41.01&longitude=28.98&current=temperature_2m,wind_speed_10m,wind_direction_10m,weather_code&timezone=Europe%2FIstanbul')
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(d => {
+      const c = d.current, from = c.wind_direction_10m, ws = c.wind_speed_10m;
+      const to = (from + 180) * Math.PI / 180, mag = Math.max(8, Math.min(40, 6 + ws * 1.3));
+      mean.target = { u: Math.sin(to) * mag, v: -Math.cos(to) * mag };
+      const el = document.getElementById('now');
+      el.innerHTML = `Istanbul, now<br><b>${Math.round(c.temperature_2m)}°C</b> · ${WX[c.weather_code] || '—'}<br>` +
+        `wind <span class="arrow" style="transform:rotate(${from + 180}deg)">↑</span> ${DIRS[Math.round(from / 45) % 8]} ${Math.round(ws)} km/h`;
+      el.classList.add('on');
+      document.getElementById('credit').textContent = "Background: a pressure field steered by today's wind in Istanbul.";
+    })
+    .catch(() => {});
+})();
+</script>
 </body>
 </html>
