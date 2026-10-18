@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Sözlük · Yönetim</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d0c0c'/%3E%3Ctext x='16' y='23' font-family='Georgia' font-size='20' text-anchor='middle' fill='%23d8d3cc'%3Es%3C/text%3E%3Ccircle cx='24' cy='9' r='2.5' fill='%23a24451'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Geist:wght@300;400&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0d0c0c; --panel:#141313; --text:#ece8e2; --soft:#bdb7af; --mute:#8a847c; --line:rgba(236,232,226,.1); --line-2:rgba(236,232,226,.18);
+          --wine:#8e2f3b; --wine-soft:#b4606b; --ok:#7f9c86;
+          --serif:"Cormorant Garamond",Georgia,serif; --sans:Geist,system-ui,sans-serif; --mono:"Geist Mono",ui-monospace,monospace; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 300 15px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  [hidden] { display: none !important; }
+  main { max-width: 920px; margin: 0 auto; padding: 28px 16px 80px; }
+  h1 { font: 300 52px/1 var(--serif); margin: 20px 0 6px; }
+  h2 { font: 400 11px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--mute);
+       margin: 44px 0 14px; display: flex; gap: 12px; align-items: center; }
+  h2 b { color: var(--wine-soft); font-weight: 400; }
+  h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .top { display: flex; justify-content: space-between; font: 400 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+  .top a { text-decoration: none; color: inherit; }
+  .card { border: 1px solid var(--line); background: var(--panel); padding: 16px; margin-bottom: 10px; display: grid; gap: 10px; }
+  .meta { font: 400 10.5px/1.5 var(--mono); color: var(--mute); }
+  .big { font: 400 26px/1.15 var(--serif); }
+  .small { color: var(--soft); font-size: 14px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button.b { background: transparent; border: 1px solid var(--line-2); padding: 8px 12px; font: 400 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+  button.b:hover { border-color: var(--soft); }
+  button.ok { border-color: var(--ok); color: #cfe0d3; }
+  button.no { border-color: var(--wine); color: #e6b9bf; }
+  button.on { background: rgba(142,47,59,.25); border-color: var(--wine-soft); }
+  label { display: grid; gap: 4px; font: 400 10px/1.3 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+  input, textarea, select { background: transparent; border: 0; border-bottom: 1px solid var(--line-2); padding: 7px 0; outline: none;
+                            font: 300 15px/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--text); }
+  input.serif { font: 400 24px/1.2 var(--serif); }
+  textarea { resize: vertical; min-height: 54px; }
+  select { background: var(--bg); }
+  input:focus, textarea:focus { border-color: var(--wine-soft); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; }
+  .empty { font: 400 11px/1.6 var(--mono); color: var(--mute); padding: 6px 0; }
+  .msg { font: 400 11px/1.5 var(--mono); color: var(--soft); min-height: 1.5em; position: sticky; top: 0; background: var(--bg); padding: 6px 0; z-index: 2; }
+  .msg.err { color: var(--wine-soft); }
+  .preview { border: 1px dashed var(--line-2); padding: 12px 14px; font-size: 14px; color: var(--soft); display: grid; gap: 6px; max-height: 280px; overflow: auto; }
+  .preview b { font: 400 10px/1 var(--mono); letter-spacing: .14em; color: var(--wine-soft); font-weight: 400; }
+  .preview ol { padding-left: 20px; display: grid; gap: 4px; }
+  .check { display: flex; gap: 8px; align-items: center; font: 400 10.5px/1 var(--mono); letter-spacing: .1em; color: var(--soft); text-transform: uppercase; }
+  .check input { width: auto; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .row .w { font: 400 22px/1.1 var(--serif); }
+  .tag { font: 400 9.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; padding: 4px 6px; border: 1px solid var(--line-2); color: var(--mute); margin-left: 8px; }
+  .tag.pending { border-color: #b59a5b; color: #d9c48f; }
+  .tag.pick { border-color: var(--wine-soft); color: var(--wine-soft); }
+  @media (max-width: 640px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <nav class="top"><a href="../">← Sözlük</a><a href="#" id="logout" hidden>Çıkış</a></nav>
+  <h1>Yönetim</h1>
+  <p class="msg" id="msg"></p>
+
+  <form id="login" class="card">
+    <label>Yönetici anahtarı<input type="password" name="token" autocomplete="current-password" required></label>
+    <div class="btns"><button class="b ok">Giriş</button></div>
+  </form>
+
+  <div id="app" hidden>
+    <h2><b>01</b> Onay bekleyen öneriler</h2>
+    <div id="pending"></div>
+
+    <h2><b>02</b> Kelime aç / düzenle</h2>
+    <form id="termForm" class="card" novalidate>
+      <input type="hidden" name="id">
+      <div class="grid3">
+        <label>Kelime (Türkçede kullanıldığı gibi)<input class="serif" name="word" maxlength="60" required placeholder="ör. şoför"></label>
+        <label>Köken dili<input name="origin_lang" maxlength="120" placeholder="ör. Fransızca"></label>
+        <label>Asıl biçimi<input name="origin_form" maxlength="120" placeholder="ör. chauffeur"></label>
+      </div>
+      <div class="btns"><button class="b" type="button" id="lookupBtn">TDK ve Dil Derneği'nden getir</button><span class="meta" id="lookupMsg"></span></div>
+
+      <div id="tdkBox" hidden>
+        <label class="check"><input type="checkbox" id="useTdk" checked> TDK tanımını ekle</label>
+        <div class="preview" id="tdkPrev"></div>
+      </div>
+      <div id="ddBox" hidden>
+        <label class="check"><input type="checkbox" id="useDd" checked> Dil Derneği tanımını ekle</label>
+        <div class="preview" id="ddPrev"></div>
+      </div>
+      <div id="ddManual" hidden>
+        <label>Dil Derneği tanımı (elle) <textarea id="ddText" placeholder="Dil Derneği'nden kopyalayıp yapıştır. Her satır bir anlam olur."></textarea></label>
+        <p class="meta"><a id="ddLink" href="https://www.dildernegi.org.tr/TR,274/turkce-sozluk-ara-bul.html" target="_blank" rel="noopener" style="color:inherit">Dil Derneği sözlüğünü aç ↗</a></p>
+      </div>
+
+      <label>TDK'nın önerdiği karşılık (varsa)<input name="tdk_karsilik" maxlength="120" placeholder="TDK bir Türkçe karşılık önermişse buraya"></label>
+      <label>Asıl dilde ne demek<textarea name="origin_meaning" maxlength="1200" placeholder="ör. chauffeur: ısıtan, ateşçi (ilk otomobiller buharlıydı)"></textarea></label>
+      <label>Biz ne diye kullanıyoruz<textarea name="usage" maxlength="1200"></textarea></label>
+      <label>Not<textarea name="note" maxlength="1200"></textarea></label>
+      <div class="grid2">
+        <label>Durum<select name="status"><option value="approved">yayında</option><option value="hidden">gizli</option></select></label>
+        <div></div>
+      </div>
+      <div class="btns"><button class="b ok" type="submit">Kaydet</button><button class="b" type="button" id="clearBtn">Yeni kelime</button></div>
+    </form>
+
+    <div id="termProps" hidden>
+      <h2><b>03</b> <span id="tpTitle">Öneriler</span></h2>
+      <div id="tpList"></div>
+    </div>
+
+    <h2><b>04</b> Sözlükteki kelimeler</h2>
+    <div id="all"></div>
+  </div>
+</main>
+
+<script>
+const LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
+const API = LOCAL ? 'http://localhost:8787' : 'https://sozluk-api.rahanozturk.workers.dev';
+
+// TDK answers browsers but not Cloudflare's servers, so TDK is looked up here and sent along with saves.
+async function tdkLookup(word) {
+  let last;
+  for (let i = 0; i < 3; i++) {
+    try {
+      const res = await fetch('https://sozluk.gov.tr/gts?ara=' + encodeURIComponent(word), { signal: AbortSignal.timeout(9000) });
+      if (!res.ok) throw new Error('TDK ' + res.status);
+      const data = await res.json();
+      if (!Array.isArray(data)) return null;            // {"error":"Sonuç bulunamadı"}
+      return {
+        source: 'TDK Güncel Türkçe Sözlük',
+        url: 'https://sozluk.gov.tr/?kelime=' + encodeURIComponent(word),
+        entries: data.map(e => ({
+          madde: e.madde, lisan: e.lisan || null, birlesikler: e.birlesikler || null,
+          atasozu: (e.atasozu || []).map(a => a.madde),
+          anlamlar: (e.anlamlarListe || []).map(a => ({
+            anlam: a.anlam,
+            ozellikler: (a.ozelliklerListe || []).map(o => o.tam_adi),
+            ornekler: (a.orneklerListe || []).map(o => ({ ornek: o.ornek, yazar: o.yazar?.[0]?.tam_adi || null })),
+          })),
+        })),
+      };
+    } catch (e) { last = e; }
+  }
+  throw new Error('TDK yanıt vermedi (' + (last?.message || 'bilinmiyor') + ')');
+}
+// { tdk } when TDK answered (an entry or null), {} when it didn't, so the server keeps what it had.
+const tdkFor = word => tdkLookup(word).then(tdk => ({ tdk }), () => ({}));
+
+const $ = (s, r = document) => r.querySelector(s);
+const KEY = 'sozluk.admin';
+let token = (() => { try { return sessionStorage.getItem(KEY) || ''; } catch { return ''; } })();
+let lookup = { tdk: null, dd: null };
+let current = null;   // { term, proposals } being edited
+
+function h(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) e.append(k instanceof Node ? k : String(k));
+  return e;
+}
+const btn = (text, cls, fn) => h('button', { class: 'b ' + (cls || ''), type: 'button', onclick: fn }, text);
+const when = ts => new Date(ts).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' });
+function say(text, err) { const m = $('#msg'); m.textContent = text || ''; m.className = 'msg' + (err ? ' err' : ''); }
+
+async function api(path, body, method) {
+  const res = await fetch(API + path, {
+    method: method || (body ? 'POST' : 'GET'),
+    headers: { Authorization: 'Bearer ' + token, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) { logout(); throw new Error('Anahtar yanlış.'); }
+  if (!res.ok) throw new Error(data.error || 'Hata: ' + res.status);
+  return data;
+}
+
+// ---------- pending ----------
+async function loadPending() {
+  const { proposals } = await api('/api/admin/pending');
+  const box = $('#pending'); box.textContent = '';
+  if (!proposals.length) box.append(h('p', { class: 'empty' }, 'Onay bekleyen öneri yok.'));
+  for (const p of proposals) box.append(propCard(p, true));
+}
+
+function propCard(p, pending) {
+  const tr = h('input', { class: 'serif', maxlength: 60, value: p.tr });
+  const meaning = h('textarea', { maxlength: 300, placeholder: 'anlamı / kökü yok' }); meaning.value = p.meaning || '';
+  const reason = h('textarea', { maxlength: 600, placeholder: 'gerekçe yok' }); reason.value = p.reason || '';
+  const edits = () => ({ tr: tr.value, meaning: meaning.value, reason: reason.value });
+  const tags = [p.status === 'pending' && h('span', { class: 'tag pending' }, 'bekliyor'), p.pick ? h('span', { class: 'tag pick' }, 'seçilen') : null,
+    p.status === 'approved' ? h('span', { class: 'tag' }, `TDK ${p.has_tdk ? 'var' : 'yok'} · Dil Derneği ${p.has_dd ? 'var' : 'yok'}`) : null];
+  return h('div', { class: 'card' },
+    h('span', { class: 'meta' }, `${p.term_word ? p.term_word + ' · ' : ''}${p.nick || 'anonim'} · ${when(p.created_at)}${p.score != null ? ' · puan ' + p.score : ''}`, ...tags),
+    tr, meaning, reason,
+    h('div', { class: 'btns' },
+      (pending || p.status === 'pending')
+        ? [btn('Onayla', 'ok', async () => { say('Onaylanıyor, TDK ve Dil Derneği sorgulanıyor…'); act(`/api/admin/proposals/${p.id}`, { status: 'approved', ...edits(), ...(await tdkFor(tr.value)) }); }),
+           btn('Reddet', 'no', () => act(`/api/admin/proposals/${p.id}`, { status: 'rejected' }))]
+        : [btn('Kaydet', '', async () => act(`/api/admin/proposals/${p.id}`, { ...edits(), ...(tr.value !== p.tr ? await tdkFor(tr.value) : {}) })),
+           btn(p.pick ? 'Seçileni kaldır' : 'Seçilen yap', p.pick ? 'on' : '', () => act(`/api/admin/proposals/${p.id}`, { pick: !p.pick })),
+           btn('Sözlüklerden getir', '', async () => { say('TDK ve Dil Derneği sorgulanıyor…'); act(`/api/admin/proposals/${p.id}/lookup`, await tdkFor(p.tr)); }),
+           btn('Yayından kaldır', '', () => act(`/api/admin/proposals/${p.id}`, { status: 'rejected' }))],
+      btn('Sil', 'no', () => { if (confirm(`“${p.tr}” önerisi ve tüm tepkileri silinsin mi?`)) act(`/api/admin/proposals/${p.id}`, null, 'DELETE'); })));
+}
+
+// ---------- words ----------
+async function loadAll() {
+  const { terms } = await api('/api/admin/terms');
+  const box = $('#all'); box.textContent = '';
+  if (!terms.length) box.append(h('p', { class: 'empty' }, 'Sözlük boş.'));
+  for (const t of terms) box.append(h('div', { class: 'row' },
+    h('div', {}, h('span', { class: 'w' }, t.word), t.status !== 'approved' ? h('span', { class: 'tag' }, 'gizli') : null,
+      h('div', { class: 'meta' }, [t.origin_lang, `${t.count} öneri`, `etkinlik ${t.heat}`].filter(Boolean).join(' · '))),
+    btn('Yönet', '', () => editTerm(t.id))));
+}
+
+async function editTerm(id) {
+  current = await api('/api/admin/terms/' + id);
+  const t = current.term, f = $('#termForm');
+  for (const k of ['id', 'word', 'origin_lang', 'origin_form', 'origin_meaning', 'tdk_karsilik', 'usage', 'note', 'status']) f.elements[k].value = t[k] ?? (k === 'status' ? 'approved' : '');
+  lookup = { tdk: t.tdk, dd: t.dd };
+  showLookup({ tdk: t.tdk, dd: t.dd, errors: {} }, true);
+  renderTermProps();
+  f.scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderTermProps() {
+  const box = $('#tpList'); box.textContent = '';
+  $('#termProps').hidden = !current;
+  if (!current) return;
+  $('#tpTitle').textContent = `“${current.term.word}” önerileri`;
+  if (!current.proposals.length) box.append(h('p', { class: 'empty' }, 'Bu kelimeye henüz öneri yok.'));
+  for (const p of current.proposals) box.append(propCard(p, false));
+}
+
+// ---------- lookup ----------
+$('#lookupBtn').addEventListener('click', async () => {
+  const f = $('#termForm'), word = f.elements.word.value.trim();
+  if (!word) { $('#lookupMsg').textContent = 'Önce kelimeyi yaz.'; return; }
+  $('#lookupMsg').textContent = 'Getiriliyor…';
+  try {
+    const [t, d] = await Promise.allSettled([tdkLookup(word), api('/api/admin/lookup?word=' + encodeURIComponent(word))]);
+    const r = { tdk: t.status === 'fulfilled' ? t.value : null, dd: d.status === 'fulfilled' ? d.value.dd : null, errors: {} };
+    if (t.status === 'rejected') r.errors.tdk = t.reason.message;
+    if (d.status === 'rejected') r.errors.dd = d.reason.message; else if (d.value.errors.dd) r.errors.dd = d.value.errors.dd;
+    const lisan = r.tdk?.entries.find(e => e.lisan)?.lisan;
+    r.guess = lisan ? { origin_lang: lisan.split(' ')[0], origin_form: lisan.split(' ').slice(1).join(' ') || null }
+                    : (d.status === 'fulfilled' ? d.value.guess : {});
+    lookup = { tdk: r.tdk, dd: r.dd };
+    if (!f.elements.origin_lang.value && r.guess.origin_lang) f.elements.origin_lang.value = r.guess.origin_lang;
+    if (!f.elements.origin_form.value && r.guess.origin_form) f.elements.origin_form.value = r.guess.origin_form;
+    // First real definition; TDK lists cross-references as "► sürücü (I)".
+    const first = r.tdk?.entries.flatMap(e => e.anlamlar).find(a => !a.anlam.trim().startsWith('►'));
+    if (!f.elements.usage.value && first) f.elements.usage.value = first.anlam;
+    showLookup(r);
+  } catch (e) { $('#lookupMsg').textContent = e.message; }
+});
+
+function showLookup(r, quiet) {
+  const parts = [];
+  parts.push(r.tdk ? 'TDK: bulundu' : r.errors.tdk ? 'TDK: ' + r.errors.tdk : 'TDK: kayıt yok');
+  parts.push(r.dd ? 'Dil Derneği: bulundu' : r.errors.dd ? 'Dil Derneği: çekilemedi' : 'Dil Derneği: kayıt yok');
+  $('#lookupMsg').textContent = quiet ? '' : parts.join('  ·  ');
+
+  $('#tdkBox').hidden = !r.tdk; $('#useTdk').checked = !!r.tdk;
+  const tp = $('#tdkPrev'); tp.textContent = '';
+  if (r.tdk) for (const e of r.tdk.entries) tp.append(
+    e.lisan ? h('b', {}, e.lisan) : null,
+    h('ol', {}, ...e.anlamlar.map(a => h('li', {}, (a.ozellikler.length ? '(' + a.ozellikler.join(', ') + ') ' : '') + a.anlam)))) ;
+
+  $('#ddBox').hidden = !r.dd; $('#useDd').checked = !!r.dd;
+  const dp = $('#ddPrev'); dp.textContent = '';
+  if (r.dd) for (const b of r.dd.blocks) dp.append(h('b', {}, b.head + (b.tags ? '  ' + b.tags : '')), h('ol', {}, ...b.anlamlar.map(a => h('li', {}, a))));
+
+  $('#ddManual').hidden = !!r.dd;
+  $('#ddText').value = '';
+  $('#ddLink').href = 'https://www.dildernegi.org.tr/TR,274/turkce-sozluk-ara-bul.html';
+}
+
+$('#termForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, body = Object.fromEntries(new FormData(f));
+  if (!body.word.trim()) { say('Kelimeyi boş bırakma.', true); return; }
+  if (!body.id) delete body.id;
+  body.tdk = $('#useTdk').checked ? lookup.tdk : null;
+  const manual = $('#ddText').value.trim();
+  body.dd = $('#useDd').checked && lookup.dd ? lookup.dd
+    : manual ? { source: 'Dil Derneği Türkçe Sözlük', url: 'https://www.dildernegi.org.tr/TR,274/turkce-sozluk-ara-bul.html',
+                 blocks: [{ head: body.word.trim(), tags: '', anlamlar: manual.split(/\n+/).map(s => s.trim()).filter(Boolean) }] }
+    : null;
+  try {
+    const r = await api('/api/admin/terms', body);
+    say(`Kaydedildi: ${body.word}`);
+    await Promise.all([loadAll(), editTerm(r.id)]);
+  } catch (err) { say(err.message, true); }
+});
+
+$('#clearBtn').addEventListener('click', () => {
+  const f = $('#termForm'); f.reset(); f.elements.id.value = '';
+  current = null; lookup = { tdk: null, dd: null };
+  for (const id of ['#tdkBox', '#ddBox', '#ddManual']) $(id).hidden = true;
+  $('#lookupMsg').textContent = ''; renderTermProps(); f.elements.word.focus();
+});
+
+const FOUND = { found: 'bulundu', none: 'kayıt yok', error: 'ulaşılamadı' };
+async function act(path, body, method) {
+  try {
+    if (body && body.status === 'approved') say('Onaylanıyor, TDK ve Dil Derneği sorgulanıyor…');
+    const r = await api(path, body, method);
+    say(r.found ? `Kaydedildi. TDK: ${FOUND[r.found.tdk]} · Dil Derneği: ${FOUND[r.found.dd]}` : 'Kaydedildi.');
+    await Promise.all([loadPending(), loadAll(), current ? editTerm(current.term.id).catch(() => {}) : null]);
+  } catch (e) { say(e.message, true); }
+}
+
+// ---------- session ----------
+$('#login').addEventListener('submit', async e => {
+  e.preventDefault();
+  token = e.target.elements.token.value.trim();
+  try { await start(); try { sessionStorage.setItem(KEY, token); } catch {} } catch (err) { say(err.message, true); }
+});
+function logout() {
+  token = ''; try { sessionStorage.removeItem(KEY); } catch {}
+  $('#app').hidden = true; $('#login').hidden = false; $('#logout').hidden = true;
+}
+$('#logout').addEventListener('click', e => { e.preventDefault(); logout(); });
+async function start() {
+  await Promise.all([loadPending(), loadAll()]);
+  $('#login').hidden = true; $('#app').hidden = false; $('#logout').hidden = false; say('');
+}
+if (token) start().catch(e => say(e.message, true));
+</script>
+</body>
+</html>

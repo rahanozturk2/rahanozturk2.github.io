@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sözlük</title>
+<meta name="description" content="Dilimize yerleşmiş yabancı kelimelere Türkçe kökenli karşılıklar. Öner, tepki ver, birlikte bulalım.">
+<meta property="og:title" content="Sözlük">
+<meta property="og:description" content="Yabancı kelimelere Türkçe kökenli karşılıklar. Öner, tepki ver, birlikte bulalım.">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#0d0c0c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d0c0c'/%3E%3Ctext x='16' y='23' font-family='Georgia' font-size='20' text-anchor='middle' fill='%23d8d3cc'%3Es%3C/text%3E%3Ccircle cx='24' cy='9' r='2.5' fill='%23cf7f8a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Geist:wght@300;400&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  /*
+    One rule for the whole page: anything you can click is rose (--act);
+    everything else is neutral. Selected things are filled rose.
+  */
+  :root {
+    --bg: #0d0c0c;
+    --panel: #141313;
+    --text: #ece8e2;
+    --soft: #bdb7af;
+    --mute: #8a847c;
+    --line: rgba(236, 232, 226, .1);
+    --line-2: rgba(236, 232, 226, .18);
+    --act: #cf7f8a;
+    --act-hi: #eaa5ae;
+    --act-dim: rgba(207, 127, 138, .45);
+    --act-bg: rgba(207, 127, 138, .14);
+    --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+    --sans: Geist, system-ui, sans-serif;
+    --mono: "Geist Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); }
+  body { background: var(--bg); color: var(--text); font: 300 18.5px/1.6 var(--sans); -webkit-font-smoothing: antialiased;
+         min-height: 100vh; display: flex; flex-direction: column; }
+  a { color: inherit; }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  [hidden] { display: none !important; }
+  ::selection { background: var(--act-dim); color: var(--text); }
+  :focus-visible { outline: 2px solid var(--act); outline-offset: 3px; }
+  .mono { font: 400 12.5px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+
+  /* clickable: one look everywhere */
+  .act { color: var(--act); text-decoration: none; transition: color .15s; }
+  .act:hover { color: var(--act-hi); }
+  .btn { display: inline-flex; align-items: center; gap: 10px; background: transparent; color: var(--act);
+         border: 1px solid var(--act-dim); padding: 11px 18px; font: 400 16px/1 var(--sans); text-decoration: none;
+         transition: border-color .15s, color .15s, background .15s; }
+  .btn:hover { border-color: var(--act); color: var(--act-hi); background: var(--act-bg); }
+  .btn.solid { background: var(--act); color: #1a0f11; border-color: var(--act); }
+  .btn.solid:hover { background: var(--act-hi); border-color: var(--act-hi); color: #1a0f11; }
+
+  /* ---------- frame ---------- */
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 22px 40px; border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: baseline; gap: 16px; }
+  .brand b { font: 400 38px/1 var(--serif); letter-spacing: .01em; }
+  .brand span { font: italic 300 20px/1 var(--serif); color: var(--mute); }
+
+  .grid { flex: 1; display: grid; grid-template-columns: minmax(300px, 24%) minmax(0, 1fr) minmax(300px, 24%); }
+  .col { padding: 36px 40px 64px; min-width: 0; }
+  .left { border-right: 1px solid var(--line); }
+  .right { border-left: 1px solid var(--line); }
+  .sticky { position: sticky; top: 28px; }
+  aside h2 { font: 400 31px/1.1 var(--serif); }
+  aside .sub { margin: 6px 0 20px; letter-spacing: .06em; text-transform: none; font-size: 13px; }
+  .inner { max-width: 940px; margin: 0 auto; }
+
+  /* ---------- bunu kullan ---------- */
+  .use { list-style: none; }
+  .use a { display: grid; gap: 2px; text-decoration: none; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .use .from { font: 400 16px/1.3 var(--sans); color: var(--mute); }
+  .use .from s { text-decoration-color: var(--mute); }
+  .use .to { font: 400 29px/1.1 var(--serif); color: var(--act); transition: color .15s; }
+  .use a:hover .to { color: var(--act-hi); }
+  .use .star { font: 400 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); margin-top: 4px; }
+
+  /* ---------- gündemde ---------- */
+  .hot { list-style: none; counter-reset: hot; }
+  .hot a { display: grid; grid-template-columns: 30px 1fr auto; gap: 12px; align-items: baseline; text-decoration: none;
+           padding: 13px 0; border-bottom: 1px solid var(--line); counter-increment: hot; }
+  .hot a::before { content: counter(hot, decimal-leading-zero); font: 400 12px/1 var(--mono); color: var(--mute); }
+  .hot .w { font: 400 27px/1.1 var(--serif); color: var(--act); transition: color .15s; }
+  .hot a:hover .w { color: var(--act-hi); }
+  .hot .n { font: 400 12.5px/1 var(--mono); color: var(--mute); }
+  .empty { font: 400 13px/1.6 var(--mono); color: var(--mute); padding: 8px 0; }
+
+  /* ---------- search ---------- */
+  .search { position: relative; max-width: 720px; margin: 0 auto; }
+  .search input { width: 100%; background: var(--panel); border: 1px solid var(--line-2); border-radius: 999px;
+                  padding: 17px 26px 17px 58px; font: 400 24px/1.2 var(--serif); outline: none; transition: border-color .15s; }
+  .search input::placeholder { color: var(--mute); font-style: italic; }
+  .search input:focus { border-color: var(--act); }
+  .search svg { position: absolute; left: 22px; top: 50%; width: 20px; height: 20px; transform: translateY(-50%); color: var(--mute); }
+  .stats { text-align: center; margin: 14px 0 34px; letter-spacing: .08em; text-transform: none; }
+
+  /* ---------- word list ---------- */
+  .words { list-style: none; }
+  .words a { display: grid; grid-template-columns: 1fr auto; gap: 6px 24px; align-items: baseline; text-decoration: none;
+             padding: 24px 0; border-top: 1px solid var(--line); }
+  .words li:last-child a { border-bottom: 1px solid var(--line); }
+  .words .w { font: 400 42px/1.05 var(--serif); color: var(--act); transition: color .15s; }
+  .words a:hover .w { color: var(--act-hi); }
+  .words .n { font: 400 12.5px/1 var(--mono); letter-spacing: .08em; color: var(--mute); white-space: nowrap; }
+  .words .o { grid-column: 1 / -1; font-size: 16.5px; color: var(--soft); }
+  .words .o b { font: 400 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); font-weight: 400; margin-right: 10px; }
+  .words .o i { font: italic 400 21px/1 var(--serif); color: var(--text); }
+  .words .u { grid-column: 1 / -1; color: var(--mute); font-size: 16.5px; max-width: 70ch;
+              display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ---------- word page ---------- */
+  .back { font-size: 17px; padding: 10px 16px; margin-bottom: 30px; }
+  .head h1 { font: 300 clamp(64px, 7vw, 108px)/.95 var(--serif); letter-spacing: -.01em; }
+  .facts { margin-top: 22px; display: grid; gap: 14px; }
+  .fact { display: grid; grid-template-columns: 190px 1fr; gap: 18px; align-items: baseline; }
+  .fact > span { font: 400 12px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+  .fact p { color: var(--soft); max-width: 64ch; }
+  .fact .lang { color: var(--text); }
+  .fact .form { font: italic 400 27px/1 var(--serif); color: var(--text); margin-left: 8px; }
+  .fact .tdkk { font: 400 30px/1.1 var(--serif); color: var(--text); }
+
+  .srcs { margin-top: 28px; display: grid; gap: 10px; }
+  details.src { border: 1px solid var(--line); background: var(--panel); }
+  details.src summary { list-style: none; display: flex; align-items: center; gap: 14px; padding: 15px 18px; cursor: pointer; color: var(--act); }
+  details.src summary::-webkit-details-marker { display: none; }
+  details.src summary::before { content: "▸"; font-size: 14px; transition: transform .2s; }
+  details.src[open] summary::before { transform: rotate(90deg); }
+  details.src summary b { font: 400 16.5px/1 var(--sans); }
+  details.src summary span { margin-left: auto; font: 400 12.5px/1 var(--mono); color: var(--mute); }
+  details.src summary:hover { color: var(--act-hi); }
+  details.src[open] summary { border-bottom: 1px solid var(--line); }
+  .defs { padding: 18px 22px 20px; display: grid; gap: 16px; }
+  .defs .entry + .entry { border-top: 1px dashed var(--line); padding-top: 16px; }
+  .defs .lisan { font: 400 12.5px/1.4 var(--mono); color: var(--soft); letter-spacing: .06em; margin-bottom: 10px; }
+  .defs ol { padding-left: 26px; display: grid; gap: 12px; }
+  .defs li::marker { font: 400 13px var(--mono); color: var(--mute); }
+  .defs .tags { font: italic 400 18px var(--serif); color: var(--mute); margin-right: 8px; }
+  .defs .ex { display: block; margin-top: 5px; font: italic 400 20px/1.4 var(--serif); color: var(--soft); }
+  .defs .ex i { font: 400 12.5px var(--mono); color: var(--mute); margin-left: 8px; }
+  .defs .extra { font-size: 16px; color: var(--soft); }
+  .defs .extra b { font: 400 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); margin-right: 10px; font-weight: 400; }
+  .defs .head2 { font: 400 24px/1.2 var(--serif); }
+
+  .sec { margin-top: 56px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;
+         padding-bottom: 16px; border-bottom: 1px solid var(--line-2); }
+  .sec h2 { font: 400 36px/1.1 var(--serif); }
+  .sec h2 small { font: 400 13px/1 var(--mono); color: var(--mute); margin-left: 14px; letter-spacing: .08em; }
+
+  .prop { padding: 28px 0 26px; border-bottom: 1px solid var(--line); }
+  .prop .row1 { display: flex; justify-content: space-between; align-items: baseline; gap: 18px; }
+  .prop .tr { font: 400 44px/1.05 var(--serif); }
+  .prop .pick { font: 400 11.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute);
+                border: 1px solid var(--line-2); padding: 5px 7px; margin-left: 14px; vertical-align: middle; }
+  .prop .score { text-align: right; white-space: nowrap; }
+  .prop .score b { font: 400 34px/1 var(--serif); font-weight: 400; }
+  .prop .score span { display: block; font: 400 11.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); margin-top: 4px; }
+  .prop .info { margin-top: 12px; display: grid; gap: 8px; max-width: 70ch; }
+  .prop .info p { font-size: 17.5px; color: var(--soft); }
+  .prop .info p b { font: 400 11.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); margin-right: 10px; font-weight: 400; }
+  .prop .by { margin-top: 10px; font: 400 12.5px/1 var(--mono); color: var(--mute); }
+  .prop .srcs { margin-top: 16px; }
+
+  .meters { margin-top: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 280px)); gap: 10px 34px; }
+  .meter { display: grid; grid-template-columns: 86px 1fr; gap: 12px; align-items: center; }
+  .meter span { font: 400 11.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+  .bar { position: relative; height: 5px; background: rgba(236,232,226,.07); }
+  .bar::before { content: ""; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--line-2); }
+  .bar i { position: absolute; top: 0; bottom: 0; }
+  .bar i.p { left: 50%; background: #d9d4cd; }
+  .bar i.n { right: 50%; background: #5d5853; }
+
+  .summary { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
+  .summary .t { font-size: 16px; color: var(--soft); }
+  .summary .t b { font: 400 13px/1 var(--mono); color: var(--mute); margin-left: 6px; font-weight: 400; }
+  .summary .btn { margin-left: auto; padding: 9px 15px; font-size: 15.5px; }
+
+  .react { margin-top: 16px; padding: 18px; border: 1px solid var(--line); background: var(--panel); display: grid; gap: 14px; }
+  .react .g { display: grid; grid-template-columns: 90px 1fr; gap: 12px; align-items: start; }
+  .react .g > span { font: 400 11.5px/2.6 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+  .react .g div { display: flex; flex-wrap: wrap; gap: 8px; }
+  .react button { background: transparent; border: 1px solid var(--act-dim); padding: 9px 13px; font: 400 15.5px/1 var(--sans);
+                  color: var(--act); transition: border-color .15s, color .15s, background .15s; }
+  .react button b { font: 400 12.5px/1 var(--mono); color: var(--mute); margin-left: 8px; font-weight: 400; }
+  .react button:hover { border-color: var(--act); color: var(--act-hi); background: var(--act-bg); }
+  .react button[aria-pressed="true"] { background: var(--act); border-color: var(--act); color: #1a0f11; }
+  .react button[aria-pressed="true"] b { color: #3a2226; }
+  .react .note { font: 400 12.5px/1.4 var(--mono); color: var(--mute); }
+
+  .share { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 12px; }
+
+  form.f { margin-top: 18px; padding: 24px; background: var(--panel); border: 1px solid var(--line); display: grid; gap: 20px; }
+  .f label { display: grid; gap: 8px; font: 400 12px/1.3 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+  .f label em { font-style: normal; letter-spacing: .04em; text-transform: none; }
+  .f input, .f textarea { background: transparent; border: 0; border-bottom: 1px solid var(--line-2); padding: 9px 0; outline: none;
+                          font: 300 18.5px/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--text); }
+  .f input.big { font: 400 32px/1.2 var(--serif); }
+  .f textarea { resize: vertical; min-height: 70px; }
+  .f input:focus, .f textarea:focus { border-color: var(--act); }
+  .f .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; }
+  .f button[disabled] { opacity: .5; cursor: progress; }
+  .f .msg { font: 400 13px/1.5 var(--mono); color: var(--soft); }
+  .f .msg.err { color: var(--act-hi); }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+  footer { border-top: 1px solid var(--line); padding: 20px 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px;
+           font: 400 12.5px/1.6 var(--mono); color: var(--mute); }
+  footer a { color: var(--act); text-decoration: none; }
+  footer a:hover { color: var(--act-hi); }
+
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 16px); opacity: 0; z-index: 40; pointer-events: none;
+           background: var(--text); color: var(--bg); padding: 12px 18px; font: 400 13px/1 var(--mono); transition: opacity .2s, transform .2s; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 1200px) {
+    .grid { grid-template-columns: minmax(0, 1fr) minmax(280px, 30%); }
+    .center { grid-column: 1; grid-row: 1 / span 2; border-right: 1px solid var(--line); }
+    .left { grid-column: 2; grid-row: 1; border-right: 0; border-bottom: 1px solid var(--line); }
+    .right { grid-column: 2; grid-row: 2; border-left: 0; }
+    .sticky { position: static; }
+    .fact { grid-template-columns: 150px 1fr; }
+  }
+  @media (max-width: 780px) {
+    body { font-size: 17px; }
+    .top { padding: 18px 16px; }
+    .brand span { display: none; }
+    .grid { grid-template-columns: 1fr; }
+    .col { padding: 24px 16px 40px; }
+    .center, .left, .right { grid-column: 1; grid-row: auto; border: 0; }
+    .left { order: 2; border-top: 1px solid var(--line); }
+    .right { order: 3; border-top: 1px solid var(--line); }
+    .fact { grid-template-columns: 1fr; gap: 4px; }
+    .meters { grid-template-columns: 1fr; }
+    .react .g { grid-template-columns: 1fr; gap: 6px; }
+    .react .g > span { line-height: 1.4; }
+    .summary .btn { margin-left: 0; }
+    footer { padding: 18px 16px 28px; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><b>Sözlük</b><span>yabancı kelimelere Türkçe karşılıklar</span></div>
+  <a class="act mono" href="/" style="color: var(--act)">Rahan Öztürk ↗</a>
+</header>
+
+<div class="grid">
+  <aside class="col left">
+    <div class="sticky">
+      <h2>Bunu kullan</h2>
+      <p class="mono sub">Öne çıkan karşılıklar</p>
+      <ul class="use" id="use"><li class="empty">Yükleniyor…</li></ul>
+    </div>
+  </aside>
+
+  <main class="col center">
+    <div class="inner">
+      <div class="search">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="7" cy="7" r="5.2"/><path d="m11 11 3.6 3.6"/></svg>
+        <input id="q" type="search" placeholder="Kelime ara: panel, şoför, dashboard…" autocomplete="off" aria-label="Sözlükte ara">
+      </div>
+      <p class="mono stats" id="stats">&nbsp;</p>
+
+      <section id="listView">
+        <ul class="words" id="words"><li class="empty">Yükleniyor…</li></ul>
+      </section>
+
+      <section id="termView" hidden aria-live="polite"></section>
+    </div>
+  </main>
+
+  <aside class="col right">
+    <div class="sticky">
+      <h2>Gündemde</h2>
+      <p class="mono sub">En çok tartışılanlar</p>
+      <ol class="hot" id="hot"><li class="empty">Yükleniyor…</li></ol>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <span>Öneriler onaydan sonra yayına girer. Hesap gerekmez; sınırlar için IP adresinin yalnızca tek yönlü bir özeti saklanır.</span>
+  <span>Tanımlar: <a href="https://sozluk.gov.tr" target="_blank" rel="noopener">TDK</a> · <a href="https://www.dildernegi.org.tr/TR,274/turkce-sozluk-ara-bul.html" target="_blank" rel="noopener">Dil Derneği</a></span>
+</footer>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+// ---- settings -------------------------------------------------------------
+const LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
+const API = LOCAL ? 'http://localhost:8787' : 'https://sozluk-api.rahanozturk.workers.dev';
+const PAGE = location.origin + location.pathname;
+// ---------------------------------------------------------------------------
+
+const $ = (s, r = document) => r.querySelector(s);
+const store = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+const mine = store.get('sozluk.mine', {});      // proposalId -> [reaction keys]
+let data = { terms: [], use: [], hot: [], reactions: [] };
+let REACT = {};
+
+function h(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) e.append(k instanceof Node ? k : String(k));
+  return e;
+}
+
+function toast(text) {
+  const t = $('#toast'); t.textContent = text; t.classList.add('on');
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove('on'), 2400);
+}
+
+async function api(path, body) {
+  const res = await fetch(API + path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(out.error || 'Bağlantı hatası, biraz sonra tekrar dene.'), { status: res.status });
+  return out;
+}
+
+const fold = s => (s || '').toLocaleLowerCase('tr').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i');
+
+// ---------- side columns ----------
+function renderSides() {
+  const use = $('#use'); use.textContent = '';
+  if (!data.use.length) use.append(h('li', { class: 'empty' }, 'Henüz öne çıkan karşılık yok. Tepkilerle belirlenecek.'));
+  for (const u of data.use) use.append(h('li', {}, h('a', { href: '#' + u.slug },
+    h('span', { class: 'from' }, h('s', {}, u.word), ' yerine'),
+    h('span', { class: 'to' }, u.tr),
+    u.pick ? h('span', { class: 'star' }, 'seçilen') : null)));
+
+  const hot = $('#hot'); hot.textContent = '';
+  const bySlug = Object.fromEntries(data.terms.map(t => [t.slug, t]));
+  const list = data.hot.length ? data.hot.map(s => bySlug[s]).filter(Boolean) : data.terms.slice(0, 8);
+  if (!list.length) hot.append(h('li', { class: 'empty' }, 'Henüz kelime yok.'));
+  for (const t of list) hot.append(h('li', {}, h('a', { href: '#' + t.slug },
+    h('span', { class: 'w' }, t.word), h('span', { class: 'n' }, `${t.count} öneri`))));
+}
+
+// ---------- list ----------
+function renderList() {
+  const q = fold($('#q').value.trim());
+  const ul = $('#words'); ul.textContent = '';
+  const shown = data.terms.filter(t => !q || fold(t.word).includes(q) || fold(t.top?.tr).includes(q) || fold(t.origin_form).includes(q));
+  if (!shown.length) { ul.append(h('li', { class: 'empty' }, data.terms.length ? 'Bu aramayla eşleşen kelime yok.' : 'Henüz kelime yok.')); return; }
+  for (const t of shown) {
+    const origin = t.origin_lang || t.origin_form
+      ? h('span', { class: 'o' }, h('b', {}, 'köken'), t.origin_lang ? t.origin_lang + ' ' : '', t.origin_form ? h('i', {}, t.origin_form) : null,
+          t.origin_meaning ? `  ·  “${t.origin_meaning}”` : null)
+      : null;
+    ul.append(h('li', {}, h('a', { href: '#' + t.slug },
+      h('span', { class: 'w' }, t.word),
+      h('span', { class: 'n' }, t.count ? `${t.count} öneri` : 'öneri bekliyor'),
+      origin,
+      t.usage ? h('span', { class: 'u' }, t.usage) : null)));
+  }
+}
+
+// ---------- word page ----------
+async function openTerm(slug) {
+  const view = $('#termView');
+  $('#listView').hidden = true; view.hidden = false;
+  view.textContent = ''; view.append(h('p', { class: 'empty' }, 'Yükleniyor…'));
+  try {
+    const d = await api('/api/terms/' + encodeURIComponent(slug));
+    renderTerm(d);
+    document.title = `${d.term.word} · Sözlük`;
+  } catch (e) {
+    view.textContent = '';
+    view.append(backBtn(), h('p', { class: 'empty' }, e.status === 404 ? 'Bu kelime sözlükte yok.' : e.message));
+  }
+  scrollTo({ top: 0 });
+}
+
+function backBtn() { return h('button', { class: 'btn back', type: 'button', onclick: () => { location.hash = ''; } }, '← Tüm kelimeler'); }
+
+function fact(label, ...content) { return h('div', { class: 'fact' }, h('span', {}, label), h('p', {}, ...content)); }
+
+function renderTerm({ term: t, proposals }) {
+  const view = $('#termView'); view.textContent = '';
+  const form = proposalForm(t);
+  view.append(...[
+    backBtn(),
+    h('div', { class: 'head' }, h('h1', {}, t.word)),
+    h('div', { class: 'facts' },
+      (t.origin_lang || t.origin_form) ? fact('Köken', h('span', { class: 'lang' }, t.origin_lang || ''), t.origin_form ? h('span', { class: 'form' }, t.origin_form) : null) : null,
+      t.origin_meaning ? fact('Asıl anlamı', t.origin_meaning) : null,
+      t.usage ? fact('Biz ne diye kullanıyoruz', t.usage) : null,
+      t.tdk_karsilik ? fact('TDK önerisi', h('span', { class: 'tdkk' }, t.tdk_karsilik)) : null,
+      t.note ? fact('Not', t.note) : null),
+    sources(t.tdk, t.dd, ''),
+    h('div', { class: 'sec' },
+      h('h2', {}, 'Türkçe kökenli öneriler', h('small', {}, `${proposals.length} öneri`)),
+      h('button', { class: 'btn solid', type: 'button', onclick: () => { form.hidden = !form.hidden; if (!form.hidden) $('input[name=tr]', form).focus(); } }, '+ Öneri yaz')),
+    form,
+    ...(proposals.length ? proposals.map(propEl) : [h('p', { class: 'empty' }, 'Henüz onaylanmış öneri yok. İlk öneriyi sen yaz.')]),
+    share(t),
+  ].filter(Boolean));
+}
+
+function sources(tdk, dd, word) {
+  if (!tdk && !dd) return null;
+  const q = word ? ` “${word}”` : '';
+  return h('div', { class: 'srcs' }, tdk ? tdkBlock(tdk, q) : null, dd ? ddBlock(dd, q) : null);
+}
+
+function tdkBlock(tdk, q) {
+  const n = tdk.entries.reduce((s, e) => s + e.anlamlar.length, 0);
+  return h('details', { class: 'src' },
+    h('summary', {}, h('b', {}, `TDK sözlüğünde${q}`), h('span', {}, `${n} anlam`)),
+    h('div', { class: 'defs' },
+      ...tdk.entries.map(e => h('div', { class: 'entry' },
+        e.lisan ? h('div', { class: 'lisan' }, e.lisan) : null,
+        h('ol', {}, ...e.anlamlar.map(a => h('li', {},
+          a.ozellikler.length ? h('span', { class: 'tags' }, a.ozellikler.join(', ')) : null,
+          a.anlam,
+          ...a.ornekler.map(o => h('span', { class: 'ex' }, '“' + o.ornek + '”', o.yazar ? h('i', {}, o.yazar) : null))))),
+        e.birlesikler ? h('p', { class: 'extra' }, h('b', {}, 'Birleşik'), e.birlesikler) : null,
+        e.atasozu?.length ? h('p', { class: 'extra' }, h('b', {}, 'Deyim'), e.atasozu.join(', ')) : null)),
+      h('a', { class: 'act mono', href: tdk.url, target: '_blank', rel: 'noopener', style: 'color: var(--act)' }, 'sozluk.gov.tr ↗')));
+}
+
+function ddBlock(dd, q) {
+  return h('details', { class: 'src' },
+    h('summary', {}, h('b', {}, `Dil Derneği sözlüğünde${q}`), h('span', {}, `${dd.blocks.length} madde`)),
+    h('div', { class: 'defs' },
+      ...dd.blocks.map(b => h('div', { class: 'entry' },
+        h('div', {}, h('span', { class: 'head2' }, b.head), b.tags ? h('span', { class: 'tags' }, '  ' + b.tags) : null),
+        b.anlamlar.length ? h('ol', {}, ...b.anlamlar.map(a => h('li', {}, a))) : null)),
+      h('a', { class: 'act mono', href: dd.url, target: '_blank', rel: 'noopener', style: 'color: var(--act)' }, 'dildernegi.org.tr ↗')));
+}
+
+function averages(counts) {
+  let a = 0, an = 0, s = 0, sn = 0, total = 0;
+  for (const [k, n] of Object.entries(counts)) {
+    const r = REACT[k]; if (!r) continue;
+    total += n;
+    if (r.a) { a += r.a * n; an += n; }
+    if (r.s) { s += r.s * n; sn += n; }
+  }
+  return { a: an ? a / an : null, s: sn ? s / sn : null, total };
+}
+
+function meter(label, v) {
+  const bar = h('div', { class: 'bar', title: v == null ? 'henüz tepki yok' : v.toFixed(1) + ' / 2' });
+  if (v != null && v !== 0) bar.append(h('i', { class: v > 0 ? 'p' : 'n', style: `width:${Math.min(50, Math.abs(v) / 2 * 50)}%` }));
+  return h('div', { class: 'meter' }, h('span', {}, label), bar);
+}
+
+const TONES = [['pos', 'Olumlu'], ['mid', 'Arada'], ['neg', 'Olumsuz']];
+
+function propEl(p) {
+  const box = h('div', { class: 'prop' });
+  const srcs = sources(p.tdk, p.dd, p.tr);
+  const draw = () => {
+    const av = averages(p.counts);
+    const top = Object.entries(p.counts).filter(([k, n]) => n > 0 && REACT[k]).sort((x, y) => y[1] - x[1]).slice(0, 4);
+    const panel = h('div', { class: 'react', hidden: !box.dataset.open },
+      ...TONES.map(([tone, name]) => h('div', { class: 'g' }, h('span', {}, name),
+        h('div', {}, ...data.reactions.filter(r => r.tone === tone).map(r =>
+          h('button', { type: 'button', 'aria-pressed': String((mine[p.id] || []).includes(r.key)), onclick: () => toggle(p, r.key, draw) },
+            r.label, h('b', {}, p.counts[r.key] || 0)))))),
+      h('p', { class: 'note' }, 'En fazla 3 tepki seçebilirsin; tekrar tıklayınca geri alınır.'));
+    box.textContent = '';
+    box.append(...[
+      h('div', { class: 'row1' },
+        h('div', {}, h('span', { class: 'tr' }, p.tr), p.pick ? h('span', { class: 'pick' }, 'seçilen') : null),
+        h('div', { class: 'score' }, h('b', {}, p.score), h('span', {}, 'puan'))),
+      (p.meaning || p.reason) ? h('div', { class: 'info' },
+        p.meaning ? h('p', {}, h('b', {}, 'Anlamı'), p.meaning) : null,
+        p.reason ? h('p', {}, h('b', {}, 'Neden'), p.reason) : null) : null,
+      h('div', { class: 'by' }, '— ' + (p.nick || 'anonim')),
+      srcs,
+      h('div', { class: 'meters' }, meter('Anlam', av.a), meter('Söyleyiş', av.s)),
+      h('div', { class: 'summary' },
+        ...(top.length ? top.map(([k, n]) => h('span', { class: 't' }, REACT[k].label, h('b', {}, n))) : [h('span', { class: 't' }, 'Henüz tepki yok')]),
+        h('button', { class: 'btn', type: 'button', onclick: () => { box.dataset.open = box.dataset.open ? '' : '1'; draw(); } },
+          box.dataset.open ? 'Kapat' : 'Tepki ver')),
+      panel,
+    ].filter(Boolean));
+  };
+  draw();
+  return box;
+}
+
+async function toggle(p, key, redraw) {
+  const list = mine[p.id] || [];
+  if (!list.includes(key) && list.length >= 3) { toast('En fazla 3 tepki. Önce birini kaldır.'); return; }
+  try {
+    const r = await api('/api/reactions', { proposal_id: p.id, kind: key });
+    p.counts = r.counts; p.score = r.score; mine[p.id] = r.mine; store.set('sozluk.mine', mine);
+    redraw();
+  } catch (e) { toast(e.message); }
+}
+
+function share(t) {
+  const url = PAGE + '#' + t.slug;
+  const text = `“${t.word}” yerine Türkçe kökenli ne kullanalım?`;
+  return h('div', { class: 'share' },
+    h('a', { class: 'btn', target: '_blank', rel: 'noopener', href: 'https://x.com/intent/post?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url) }, "X'te paylaş ↗"),
+    h('button', { class: 'btn', type: 'button', onclick: () => navigator.clipboard?.writeText(url).then(() => toast('Bağlantı kopyalandı'), () => toast(url)) }, 'Bağlantıyı kopyala'));
+}
+
+function proposalForm(t) {
+  const msg = h('span', { class: 'msg', role: 'status' });
+  const btn = h('button', { class: 'btn solid', type: 'submit' }, 'Gönder');
+  const form = h('form', { class: 'f', novalidate: true, hidden: true },
+    h('label', {}, `“${t.word}” yerine Türkçe kökenli öneri`, h('input', { class: 'big', name: 'tr', maxlength: 60, required: true })),
+    h('label', {}, h('span', {}, 'Ne anlama geliyor, kökü ne? ', h('em', {}, '(isteğe bağlı)')), h('textarea', { name: 'meaning', maxlength: 300, placeholder: 'ör. sür- kökünden, “süren kişi”' })),
+    h('label', {}, h('span', {}, 'Neden bu? ', h('em', {}, '(isteğe bağlı)')), h('textarea', { name: 'reason', maxlength: 600, placeholder: 'Neden bu karşılığı seçtin?' })),
+    h('label', {}, h('span', {}, 'Rumuz ', h('em', {}, '(isteğe bağlı)')), h('input', { name: 'nick', maxlength: 32, placeholder: 'anonim' })),
+    h('div', { class: 'hp', 'aria-hidden': 'true' }, h('label', {}, 'Web sitesi', h('input', { name: 'website', tabindex: '-1', autocomplete: 'off' }))),
+    h('div', { class: 'row' }, msg, btn));
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    if (!String(fd.get('tr')).trim()) { msg.className = 'msg err'; msg.textContent = 'Öneriyi boş bırakma.'; return; }
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Gönderiliyor…';
+    try {
+      await api('/api/proposals', { term_id: t.id, tr: fd.get('tr'), meaning: fd.get('meaning'), reason: fd.get('reason'), nick: fd.get('nick'), website: fd.get('website') });
+      form.reset(); msg.textContent = 'Teşekkürler! Önerin onaydan sonra burada görünecek.';
+    } catch (err) { msg.className = 'msg err'; msg.textContent = err.message; }
+    finally { btn.disabled = false; }
+  });
+  return form;
+}
+
+// ---------- routing ----------
+function route() {
+  const slug = decodeURIComponent(location.hash.slice(1));
+  if (slug) openTerm(slug);
+  else { $('#termView').hidden = true; $('#listView').hidden = false; document.title = 'Sözlük'; }
+}
+
+async function load() {
+  try {
+    data = await api('/api/overview');
+    REACT = Object.fromEntries(data.reactions.map(r => [r.key, r]));
+    const props = data.terms.reduce((n, t) => n + t.count, 0);
+    $('#stats').textContent = `${data.terms.length} kelime · ${props} öneri`;
+    renderSides(); renderList(); route();
+  } catch (e) {
+    $('#words').textContent = '';
+    $('#words').append(h('li', { class: 'empty' }, 'Sözlük şu an yüklenemedi. Biraz sonra tekrar dene.'));
+    for (const id of ['#use', '#hot']) $(id).textContent = '';
+  }
+}
+
+$('#q').addEventListener('input', () => { if (location.hash) location.hash = ''; renderList(); });
+addEventListener('hashchange', route);
+load();
+</script>
+</body>
+</html>
