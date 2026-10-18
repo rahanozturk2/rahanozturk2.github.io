@@ -51,6 +51,19 @@
   .preview { border: 1px dashed var(--line-2); padding: 12px 14px; font-size: 14px; color: var(--soft); display: grid; gap: 6px; max-height: 280px; overflow: auto; }
   .preview b { font: 400 10px/1 var(--mono); letter-spacing: .14em; color: var(--wine-soft); font-weight: 400; }
   .preview ol { padding-left: 20px; display: grid; gap: 4px; }
+  fieldset.mine { border: 1px solid var(--wine); padding: 14px 16px 16px; display: grid; gap: 12px; }
+  fieldset.mine legend { padding: 0 8px; font: 400 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--wine-soft); }
+  fieldset.mine legend em { font-style: normal; text-transform: none; letter-spacing: .02em; color: var(--mute); }
+  .status { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); background: var(--bg); }
+  .srow { display: flex; align-items: center; gap: 10px; font: 400 12px/1.4 var(--mono); color: var(--soft); }
+  .srow b { font-weight: 400; color: var(--text); min-width: 96px; }
+  .srow .ic { width: 12px; text-align: center; }
+  .srow.ok .ic { color: var(--ok); }
+  .srow.err .ic, .srow.err span { color: var(--wine-soft); }
+  .srow.none { color: var(--mute); }
+  .spin { width: 11px; height: 11px; border: 1.5px solid var(--line-2); border-top-color: var(--text); border-radius: 50%;
+          animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .check { display: flex; gap: 8px; align-items: center; font: 400 10.5px/1 var(--mono); letter-spacing: .1em; color: var(--soft); text-transform: uppercase; }
   .check input { width: auto; }
   .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
@@ -76,7 +89,10 @@
     <h2><b>01</b> Onay bekleyen öneriler</h2>
     <div id="pending"></div>
 
-    <h2><b>02</b> Kelime aç / düzenle</h2>
+    <h2><b>02</b> Ziyaretçilerin önerdiği kelimeler</h2>
+    <div id="pendingTerms"></div>
+
+    <h2><b>03</b> Kelime aç / düzenle</h2>
     <form id="termForm" class="card" novalidate>
       <input type="hidden" name="id">
       <div class="grid3">
@@ -85,6 +101,7 @@
         <label>Asıl biçimi<input name="origin_form" maxlength="120" placeholder="ör. chauffeur"></label>
       </div>
       <div class="btns"><button class="b" type="button" id="lookupBtn">TDK ve Dil Derneği'nden getir</button><span class="meta" id="lookupMsg"></span></div>
+      <div class="status" id="lookupStatus" hidden aria-live="polite"></div>
 
       <div id="tdkBox" hidden>
         <label class="check"><input type="checkbox" id="useTdk" checked> TDK tanımını ekle</label>
@@ -103,6 +120,13 @@
       <label>Asıl dilde ne demek<textarea name="origin_meaning" maxlength="1200" placeholder="ör. chauffeur: ısıtan, ateşçi (ilk otomobiller buharlıydı)"></textarea></label>
       <label>Biz ne diye kullanıyoruz<textarea name="usage" maxlength="1200"></textarea></label>
       <label>Not<textarea name="note" maxlength="1200"></textarea></label>
+      <fieldset class="mine">
+        <legend>Senin önerin <em>(isteğe bağlı, doğrudan yayına girer)</em></legend>
+        <label>Türkçe kökenli öneri<input class="serif" name="p_tr" maxlength="60" placeholder="ör. pano"></label>
+        <label>Anlamı / kökü<textarea name="p_meaning" maxlength="300" placeholder="ör. Fransızca panneau'dan, ama Türkçede yerleşmiş"></textarea></label>
+        <label>Neden bu?<textarea name="p_reason" maxlength="600"></textarea></label>
+        <label class="check"><input type="checkbox" name="p_pick"> “Bunu kullan” listesine koy</label>
+      </fieldset>
       <div class="grid2">
         <label>Durum<select name="status"><option value="approved">yayında</option><option value="hidden">gizli</option></select></label>
         <div></div>
@@ -111,11 +135,11 @@
     </form>
 
     <div id="termProps" hidden>
-      <h2><b>03</b> <span id="tpTitle">Öneriler</span></h2>
+      <h2><b>04</b> <span id="tpTitle">Öneriler</span></h2>
       <div id="tpList"></div>
     </div>
 
-    <h2><b>04</b> Sözlükteki kelimeler</h2>
+    <h2><b>05</b> Sözlükteki kelimeler</h2>
     <div id="all"></div>
   </div>
 </main>
@@ -125,34 +149,42 @@ const LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
 const API = LOCAL ? 'http://localhost:8787' : 'https://sozluk-api.rahanozturk.workers.dev';
 
 // TDK answers browsers but not Cloudflare's servers, so TDK is looked up here and sent along with saves.
+const LOOKUP_LIMIT = 15000;   // give up on a dictionary after 15 s
+
 async function tdkLookup(word) {
-  let last;
-  // TDK is often slow or drops connections; a few patient tries usually get through.
-  for (let i = 0; i < 4; i++) {
-    try {
-      const res = await fetch('https://sozluk.gov.tr/gts?ara=' + encodeURIComponent(word), { signal: AbortSignal.timeout(12000) });
-      if (!res.ok) throw new Error('TDK ' + res.status);
-      const data = await res.json();
-      if (!Array.isArray(data)) return null;            // {"error":"Sonuç bulunamadı"}
-      return {
-        source: 'TDK Güncel Türkçe Sözlük',
-        url: 'https://sozluk.gov.tr/?kelime=' + encodeURIComponent(word),
-        entries: data.map(e => ({
-          madde: e.madde, lisan: e.lisan || null, birlesikler: e.birlesikler || null,
-          atasozu: (e.atasozu || []).map(a => a.madde),
-          anlamlar: (e.anlamlarListe || []).map(a => ({
-            anlam: a.anlam,
-            ozellikler: (a.ozelliklerListe || []).map(o => o.tam_adi),
-            ornekler: (a.orneklerListe || []).map(o => ({ ornek: o.ornek, yazar: o.yazar?.[0]?.tam_adi || null })),
-          })),
-        })),
-      };
-    } catch (e) { last = e; }
-  }
-  throw new Error('TDK yanıt vermedi (' + (last?.message || 'bilinmiyor') + ')');
+  const once = ms => fetch('https://sozluk.gov.tr/gts?ara=' + encodeURIComponent(word), { signal: AbortSignal.timeout(ms) })
+    .then(res => { if (!res.ok) throw new Error('TDK ' + res.status); return res.json(); });
+  // TDK often hangs on one connection and answers the next, so start a fresh request every 2.5 s
+  // and take whichever answers first, all within LOOKUP_LIMIT.
+  const data = await new Promise((resolve, reject) => {
+    let left = 4, done = false;
+    const finish = (fn, v) => { if (!done) { done = true; clearTimeout(cap); fn(v); } };
+    const cap = setTimeout(() => finish(reject, new Error('15 sn içinde cevap vermedi')), LOOKUP_LIMIT);
+    for (let i = 0; i < 4; i++) setTimeout(() => {
+      if (done) return;
+      once(LOOKUP_LIMIT - i * 2500).then(d => finish(resolve, d),
+        () => { if (--left === 0) finish(reject, new Error('cevap vermedi')); });
+    }, i * 2500);
+  });
+  if (!Array.isArray(data)) return null;            // {"error":"Sonuç bulunamadı"}
+  return {
+    source: 'TDK Güncel Türkçe Sözlük',
+    url: 'https://sozluk.gov.tr/?kelime=' + encodeURIComponent(word),
+    entries: data.map(e => ({
+      madde: e.madde, lisan: e.lisan || null, birlesikler: e.birlesikler || null,
+      atasozu: (e.atasozu || []).map(a => a.madde),
+      anlamlar: (e.anlamlarListe || []).map(a => ({
+        anlam: a.anlam,
+        ozellikler: (a.ozelliklerListe || []).map(o => o.tam_adi),
+        ornekler: (a.orneklerListe || []).map(o => ({ ornek: o.ornek, yazar: o.yazar?.[0]?.tam_adi || null })),
+      })),
+    })),
+  };
 }
-// { tdk } when TDK answered (an entry or null), {} when it didn't, so the server keeps what it had.
-const tdkFor = word => tdkLookup(word).then(tdk => ({ tdk }), () => ({}));
+function withLimit(promise, message) {
+  return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error(message)), LOOKUP_LIMIT))]);
+}
+
 
 const $ = (s, r = document) => r.querySelector(s);
 const KEY = 'sozluk.admin';
@@ -187,10 +219,28 @@ async function api(path, body, method) {
 
 // ---------- pending ----------
 async function loadPending() {
-  const { proposals } = await api('/api/admin/pending');
+  const { proposals, terms } = await api('/api/admin/pending');
   const box = $('#pending'); box.textContent = '';
   if (!proposals.length) box.append(h('p', { class: 'empty' }, 'Onay bekleyen öneri yok.'));
   for (const p of proposals) box.append(propCard(p, true));
+
+  const tb = $('#pendingTerms'); tb.textContent = '';
+  if (!terms.length) tb.append(h('p', { class: 'empty' }, 'Önerilen kelime yok.'));
+  for (const t of terms) tb.append(h('div', { class: 'card' },
+    h('span', { class: 'meta' }, `${t.nick || 'anonim'} · ${when(t.created_at)}`),
+    h('span', { class: 'big' }, t.word),
+    t.context ? h('span', { class: 'small' }, t.context) : null,
+    h('div', { class: 'btns' },
+      btn('Aç, düzenle ve yayınla', 'ok', async () => { await editTerm(t.id); $('#lookupBtn').click(); }),
+      btn('Sil', 'no', () => { if (confirm(`“${t.word}” önerisi silinsin mi?`)) act(`/api/admin/terms/${t.id}`, null, 'DELETE'); }))));
+}
+
+// TDK is slow and often unreachable: never wait for it. Save first, attach TDK when (if) it answers.
+function tdkLater(id, word) {
+  tdkLookup(word)
+    .then(tdk => api(`/api/admin/proposals/${id}/lookup`, { tdk }))
+    .then(r => { say(`“${word}” için TDK: ${FOUND[r.found.tdk]}.`); if (current) editTerm(current.term.id, true).catch(() => {}); },
+          () => say(`“${word}” için TDK'ya ulaşılamadı. İstersen sonra “Sözlüklerden getir” ile tekrar dene.`));
 }
 
 function propCard(p, pending) {
@@ -205,11 +255,11 @@ function propCard(p, pending) {
     tr, meaning, reason,
     h('div', { class: 'btns' },
       (pending || p.status === 'pending')
-        ? [btn('Onayla', 'ok', async () => { say('Onaylanıyor, TDK ve Dil Derneği sorgulanıyor…'); act(`/api/admin/proposals/${p.id}`, { status: 'approved', ...edits(), ...(await tdkFor(tr.value)) }); }),
+        ? [btn('Onayla', 'ok', () => { act(`/api/admin/proposals/${p.id}`, { status: 'approved', ...edits() }); tdkLater(p.id, tr.value); }),
            btn('Reddet', 'no', () => act(`/api/admin/proposals/${p.id}`, { status: 'rejected' }))]
-        : [btn('Kaydet', '', async () => act(`/api/admin/proposals/${p.id}`, { ...edits(), ...(tr.value !== p.tr ? await tdkFor(tr.value) : {}) })),
+        : [btn('Kaydet', '', () => { act(`/api/admin/proposals/${p.id}`, edits()); if (tr.value !== p.tr) tdkLater(p.id, tr.value); }),
            btn(p.pick ? 'Seçileni kaldır' : 'Seçilen yap', p.pick ? 'on' : '', () => act(`/api/admin/proposals/${p.id}`, { pick: !p.pick })),
-           btn('Sözlüklerden getir', '', async () => { say('TDK ve Dil Derneği sorgulanıyor…'); act(`/api/admin/proposals/${p.id}/lookup`, await tdkFor(p.tr)); }),
+           btn('Sözlüklerden getir', '', () => { act(`/api/admin/proposals/${p.id}/lookup`, {}); tdkLater(p.id, p.tr); }),
            btn('Yayından kaldır', '', () => act(`/api/admin/proposals/${p.id}`, { status: 'rejected' }))],
       btn('Sil', 'no', () => { if (confirm(`“${p.tr}” önerisi ve tüm tepkileri silinsin mi?`)) act(`/api/admin/proposals/${p.id}`, null, 'DELETE'); })));
 }
@@ -220,15 +270,17 @@ async function loadAll() {
   const box = $('#all'); box.textContent = '';
   if (!terms.length) box.append(h('p', { class: 'empty' }, 'Sözlük boş.'));
   for (const t of terms) box.append(h('div', { class: 'row' },
-    h('div', {}, h('span', { class: 'w' }, t.word), t.status !== 'approved' ? h('span', { class: 'tag' }, 'gizli') : null,
+    h('div', {}, h('span', { class: 'w' }, t.word), t.status === 'pending' ? h('span', { class: 'tag pending' }, 'onay bekliyor') : t.status !== 'approved' ? h('span', { class: 'tag' }, 'gizli') : null,
       h('div', { class: 'meta' }, [t.origin_lang, `${t.count} öneri`, `etkinlik ${t.heat}`].filter(Boolean).join(' · '))),
     btn('Yönet', '', () => editTerm(t.id))));
 }
 
-async function editTerm(id) {
+async function editTerm(id, quiet) {
   current = await api('/api/admin/terms/' + id);
+  if (quiet) { renderTermProps(); return; }
   const t = current.term, f = $('#termForm');
-  for (const k of ['id', 'word', 'origin_lang', 'origin_form', 'origin_meaning', 'tdk_karsilik', 'usage', 'note', 'status']) f.elements[k].value = t[k] ?? (k === 'status' ? 'approved' : '');
+  for (const k of ['id', 'word', 'origin_lang', 'origin_form', 'origin_meaning', 'tdk_karsilik', 'usage', 'note']) f.elements[k].value = t[k] ?? '';
+  f.elements.status.value = t.status === 'hidden' ? 'hidden' : 'approved';   // saving a suggested word publishes it
   lookup = { tdk: t.tdk, dd: t.dd };
   showLookup({ tdk: t.tdk, dd: t.dd, errors: {} }, true);
   renderTermProps();
@@ -245,33 +297,56 @@ function renderTermProps() {
 }
 
 // ---------- lookup ----------
-$('#lookupBtn').addEventListener('click', async () => {
+let lookupRun = 0, tdkPending = null;   // tdkPending: TDK request still running for the word in the form
+$('#lookupBtn').addEventListener('click', () => {
   const f = $('#termForm'), word = f.elements.word.value.trim();
   if (!word) { $('#lookupMsg').textContent = 'Önce kelimeyi yaz.'; return; }
-  $('#lookupMsg').textContent = 'Getiriliyor…';
-  try {
-    const [t, d] = await Promise.allSettled([tdkLookup(word), api('/api/admin/lookup?word=' + encodeURIComponent(word))]);
-    const r = { tdk: t.status === 'fulfilled' ? t.value : null, dd: d.status === 'fulfilled' ? d.value.dd : null, errors: {} };
-    if (t.status === 'rejected') r.errors.tdk = t.reason.message;
-    if (d.status === 'rejected') r.errors.dd = d.reason.message; else if (d.value.errors.dd) r.errors.dd = d.value.errors.dd;
-    const lisan = r.tdk?.entries.find(e => e.lisan)?.lisan;
-    r.guess = lisan ? { origin_lang: lisan.split(' ')[0], origin_form: lisan.split(' ').slice(1).join(' ') || null }
-                    : (d.status === 'fulfilled' ? d.value.guess : {});
+  const run = ++lookupRun;
+  const r = { tdk: null, dd: null, errors: {}, waiting: { tdk: true, dd: true }, started: Date.now() };
+  $('#lookupMsg').textContent = '';
+  const tick = setInterval(() => {
+    if (run !== lookupRun || (!r.waiting.tdk && !r.waiting.dd)) { clearInterval(tick); return; }
+    renderStatus(r);
+  }, 250);
+  const fill = (k, v) => { if (v && !f.elements[k].value) f.elements[k].value = v; };
+  const update = () => {
+    if (run !== lookupRun) return;               // a newer lookup started
     lookup = { tdk: r.tdk, dd: r.dd };
-    if (!f.elements.origin_lang.value && r.guess.origin_lang) f.elements.origin_lang.value = r.guess.origin_lang;
-    if (!f.elements.origin_form.value && r.guess.origin_form) f.elements.origin_form.value = r.guess.origin_form;
+    const lisan = r.tdk?.entries.find(e => e.lisan)?.lisan;
+    if (lisan) { fill('origin_lang', lisan.split(' ')[0]); fill('origin_form', lisan.split(' ').slice(1).join(' ')); }
+    fill('origin_lang', r.ddGuess?.origin_lang);
     // First real definition; TDK lists cross-references as "► sürücü (I)".
-    const first = r.tdk?.entries.flatMap(e => e.anlamlar).find(a => !a.anlam.trim().startsWith('►'));
-    if (!f.elements.usage.value && first) f.elements.usage.value = first.anlam;
+    fill('usage', r.tdk?.entries.flatMap(e => e.anlamlar).find(a => !a.anlam.trim().startsWith('►'))?.anlam);
+    fill('usage', r.dd?.blocks[0]?.anlamlar[0]?.replace(/^\d+\.\s*/, ''));
     showLookup(r);
-  } catch (e) { $('#lookupMsg').textContent = e.message; }
+  };
+  update();
+  withLimit(api('/api/admin/lookup?word=' + encodeURIComponent(word)), '15 sn içinde cevap vermedi')
+    .then(d => { r.dd = d.dd; r.ddGuess = d.guess; if (d.errors.dd) r.errors.dd = d.errors.dd; }, e => { r.errors.dd = e.message; })
+    .finally(() => { r.waiting.dd = false; update(); });
+  const pending = tdkLookup(word)
+    .then(t => { r.tdk = t; return t; }, e => { r.errors.tdk = e.message; return undefined; })
+    .finally(() => { r.waiting.tdk = false; update(); if (tdkPending === pending) tdkPending = null; });
+  tdkPending = pending;
 });
 
+function renderStatus(r) {
+  const box = $('#lookupStatus');
+  const secs = Math.floor((Date.now() - r.started) / 1000);
+  const row = (name, waiting, found, err) =>
+    waiting ? h('div', { class: 'srow' }, h('i', { class: 'spin' }), h('b', {}, name), h('span', {}, `aranıyor… ${secs} sn`))
+    : found ? h('div', { class: 'srow ok' }, h('span', { class: 'ic' }, '✓'), h('b', {}, name), h('span', {}, 'bulundu'))
+    : err ? h('div', { class: 'srow err' }, h('span', { class: 'ic' }, '×'), h('b', {}, name),
+                h('span', {}, /15 sn/.test(err) ? '15 sn içinde cevap vermedi' : 'ulaşılamadı'))
+    : h('div', { class: 'srow none' }, h('span', { class: 'ic' }, '–'), h('b', {}, name), h('span', {}, 'bu kelime bu sözlükte yok'));
+  box.textContent = '';
+  box.append(row('Dil Derneği', r.waiting.dd, !!r.dd, r.errors.dd), row('TDK', r.waiting.tdk, !!r.tdk, r.errors.tdk));
+  if (r.waiting.tdk || r.waiting.dd) box.append(h('div', { class: 'srow none' }, h('span', { class: 'ic' }), 'Beklemeden kaydedebilirsin; gelen tanım sonradan eklenir.'));
+  box.hidden = false;
+}
+
 function showLookup(r, quiet) {
-  const parts = [];
-  parts.push(r.tdk ? 'TDK: bulundu' : r.errors.tdk ? 'TDK: ' + r.errors.tdk : 'TDK: kayıt yok');
-  parts.push(r.dd ? 'Dil Derneği: bulundu' : r.errors.dd ? 'Dil Derneği: çekilemedi' : 'Dil Derneği: kayıt yok');
-  $('#lookupMsg').textContent = quiet ? '' : parts.join('  ·  ');
+  if (quiet || !r.waiting) $('#lookupStatus').hidden = true; else renderStatus(r);
 
   $('#tdkBox').hidden = !r.tdk; $('#useTdk').checked = !!r.tdk;
   const tp = $('#tdkPrev'); tp.textContent = '';
@@ -293,6 +368,8 @@ $('#termForm').addEventListener('submit', async e => {
   const f = e.target, body = Object.fromEntries(new FormData(f));
   if (!body.word.trim()) { say('Kelimeyi boş bırakma.', true); return; }
   if (!body.id) delete body.id;
+  const own = { tr: (body.p_tr || '').trim(), meaning: body.p_meaning, reason: body.p_reason, pick: !!body.p_pick };
+  for (const k of ['p_tr', 'p_meaning', 'p_reason', 'p_pick']) delete body[k];
   body.tdk = $('#useTdk').checked ? lookup.tdk : null;
   const manual = $('#ddText').value.trim();
   body.dd = $('#useDd').checked && lookup.dd ? lookup.dd
@@ -302,6 +379,18 @@ $('#termForm').addEventListener('submit', async e => {
   try {
     const r = await api('/api/admin/terms', body);
     say(`Kaydedildi: ${body.word}`);
+    // TDK for the word was still on its way: put it on the word when it arrives.
+    if (tdkPending) {
+      const saved = { ...body, id: r.id };
+      tdkPending.then(t => t && api('/api/admin/terms', { ...saved, tdk: t }).then(() => say(`“${body.word}” için TDK sonradan eklendi.`))).catch(() => {});
+    }
+    if (own.tr) {
+      const added = await api(`/api/admin/terms/${r.id}/proposals`, own);
+      say(`Kaydedildi: ${body.word} → ${own.tr}. Dil Derneği: ${FOUND[added.found.dd]} · TDK arka planda aranıyor.`);
+      tdkLater(added.id, own.tr);
+      for (const k of ['p_tr', 'p_meaning', 'p_reason']) f.elements[k].value = '';
+      f.elements.p_pick.checked = false;
+    }
     await Promise.all([loadAll(), editTerm(r.id)]);
   } catch (err) { say(err.message, true); }
 });
@@ -310,7 +399,7 @@ $('#clearBtn').addEventListener('click', () => {
   const f = $('#termForm'); f.reset(); f.elements.id.value = '';
   current = null; lookup = { tdk: null, dd: null };
   for (const id of ['#tdkBox', '#ddBox', '#ddManual']) $(id).hidden = true;
-  $('#lookupMsg').textContent = ''; renderTermProps(); f.elements.word.focus();
+  $('#lookupMsg').textContent = ''; $('#lookupStatus').hidden = true; lookupRun++; renderTermProps(); f.elements.word.focus();
 });
 
 const FOUND = { found: 'bulundu', none: 'kayıt yok', error: 'ulaşılamadı' };

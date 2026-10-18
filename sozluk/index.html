@@ -90,6 +90,10 @@
   .hot .n { font: 400 12.5px/1 var(--mono); color: var(--mute); }
   .empty { font: 400 13px/1.6 var(--mono); color: var(--mute); padding: 8px 0; }
 
+  /* ---------- suggest a word ---------- */
+  .suggest { max-width: 720px; margin: 0 auto 18px; display: grid; justify-items: center; }
+  .suggest form.f { width: 100%; margin-top: 14px; }
+
   /* ---------- search ---------- */
   .search { position: relative; max-width: 720px; margin: 0 auto; }
   .search input { width: 100%; background: var(--panel); border: 1px solid var(--line-2); border-radius: 999px;
@@ -259,6 +263,16 @@
 
   <main class="col center">
     <div class="inner">
+      <div class="suggest">
+        <button class="btn solid" type="button" id="suggestBtn" aria-expanded="false" aria-controls="suggestForm">+ Yeni kelime öner</button>
+        <form class="f" id="suggestForm" novalidate hidden>
+          <label>Hangi yabancı kelimeye Türkçe karşılık arayalım?<input class="big" name="word" maxlength="60" required placeholder="ör. feedback"></label>
+          <label><span>Nerede karşılaştın, ne anlamda kullanılıyor? <em>(isteğe bağlı)</em></span><textarea name="context" maxlength="600"></textarea></label>
+          <label><span>Rumuz <em>(isteğe bağlı)</em></span><input name="nick" maxlength="32" placeholder="anonim"></label>
+          <div class="hp" aria-hidden="true"><label>Web sitesi<input name="website" tabindex="-1" autocomplete="off"></label></div>
+          <div class="row"><span class="msg" role="status"></span><button class="btn solid" type="submit">Gönder</button></div>
+        </form>
+      </div>
       <div class="search">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="7" cy="7" r="5.2"/><path d="m11 11 3.6 3.6"/></svg>
         <input id="q" type="search" placeholder="Kelime ara: panel, şoför, dashboard…" autocomplete="off" aria-label="Sözlükte ara">
@@ -558,6 +572,26 @@ async function load() {
 }
 
 $('#q').addEventListener('input', () => { if (location.hash) location.hash = ''; renderList(); });
+
+// Suggest a new word: it waits for approval, then opens in the dictionary.
+{
+  const btn = $('#suggestBtn'), form = $('#suggestForm'), msg = $('.msg', form), send = $('button[type=submit]', form);
+  btn.addEventListener('click', () => {
+    form.hidden = !form.hidden; btn.setAttribute('aria-expanded', String(!form.hidden));
+    if (!form.hidden) form.elements.word.focus();
+  });
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    if (!String(fd.get('word')).trim()) { msg.className = 'msg err'; msg.textContent = 'Kelimeyi boş bırakma.'; return; }
+    send.disabled = true; msg.className = 'msg'; msg.textContent = 'Gönderiliyor…';
+    try {
+      await api('/api/terms', { word: fd.get('word'), context: fd.get('context'), nick: fd.get('nick'), website: fd.get('website') });
+      form.reset(); msg.textContent = 'Teşekkürler! Kelime onaylanınca sözlükte açılacak.';
+    } catch (err) { msg.className = 'msg err'; msg.textContent = err.message; }
+    finally { send.disabled = false; }
+  });
+}
 addEventListener('hashchange', route);
 load();
 </script>
