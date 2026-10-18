@@ -127,9 +127,10 @@ const API = LOCAL ? 'http://localhost:8787' : 'https://sozluk-api.rahanozturk.wo
 // TDK answers browsers but not Cloudflare's servers, so TDK is looked up here and sent along with saves.
 async function tdkLookup(word) {
   let last;
-  for (let i = 0; i < 3; i++) {
+  // TDK is often slow or drops connections; a few patient tries usually get through.
+  for (let i = 0; i < 4; i++) {
     try {
-      const res = await fetch('https://sozluk.gov.tr/gts?ara=' + encodeURIComponent(word), { signal: AbortSignal.timeout(9000) });
+      const res = await fetch('https://sozluk.gov.tr/gts?ara=' + encodeURIComponent(word), { signal: AbortSignal.timeout(12000) });
       if (!res.ok) throw new Error('TDK ' + res.status);
       const data = await res.json();
       if (!Array.isArray(data)) return null;            // {"error":"Sonuç bulunamadı"}
