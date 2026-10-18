@@ -658,20 +658,23 @@ $('#allBtn').addEventListener('click', e => {
 });
 
 // ---------- dictionary lookups (TDK from the browser, Dil Derneği through the API) ----------
-const LOOKUP_LIMIT = 15000;   // give up on a dictionary after 15 s
+const LOOKUP_LIMIT = 15000;   // Dil Derneği: give up after 15 s
+const TDK_LIMIT = 30000;      // TDK is slow: give up after 30 s
+// When each TDK request starts (ms). TDK often hangs on one connection and answers the next,
+// so fresh requests go out while earlier ones still wait; the first answer wins.
+const TDK_TRIES = [0, 2500, 5000, 8000, 12000, 17000, 23000];
 
 async function tdkLookup(word) {
   const once = ms => fetch('https://sozluk.gov.tr/gts?ara=' + encodeURIComponent(word), { signal: AbortSignal.timeout(ms) })
     .then(res => { if (!res.ok) throw new Error('TDK ' + res.status); return res.json(); });
-  // TDK often hangs on one connection and answers the next: start a fresh request every 2.5 s, take the first answer.
   const data = await new Promise((resolve, reject) => {
-    let left = 4, done = false;
+    let left = TDK_TRIES.length, done = false;
     const finish = (fn, v) => { if (!done) { done = true; clearTimeout(cap); fn(v); } };
-    const cap = setTimeout(() => finish(reject, new Error('15 sn')), LOOKUP_LIMIT);
-    for (let i = 0; i < 4; i++) setTimeout(() => {
+    const cap = setTimeout(() => finish(reject, new Error('30 sn')), TDK_LIMIT);
+    for (const at of TDK_TRIES) setTimeout(() => {
       if (done) return;
-      once(LOOKUP_LIMIT - i * 2500).then(d => finish(resolve, d), () => { if (--left === 0) finish(reject, new Error('cevap yok')); });
-    }, i * 2500);
+      once(TDK_LIMIT - at).then(d => finish(resolve, d), () => { if (--left === 0) finish(reject, new Error('cevap yok')); });
+    }, at);
   });
   if (!Array.isArray(data)) return null;            // {"error":"Sonuç bulunamadı"}
   return {
@@ -696,7 +699,7 @@ function renderStatus(box, st) {
   const row = (name, waiting, found, err) =>
     waiting ? h('div', { class: 'srow' }, h('i', { class: 'spin' }), h('b', {}, name), h('span', {}, `aranıyor… ${secs} sn`))
     : found ? h('div', { class: 'srow ok' }, h('span', { class: 'ic' }, '✓'), h('b', {}, name), h('span', {}, 'bulundu'))
-    : err ? h('div', { class: 'srow err' }, h('span', { class: 'ic' }, '×'), h('b', {}, name), h('span', {}, /15 sn/.test(err) ? '15 sn içinde cevap vermedi' : 'ulaşılamadı'))
+    : err ? h('div', { class: 'srow err' }, h('span', { class: 'ic' }, '×'), h('b', {}, name), h('span', {}, /\d+ sn/.test(err) ? err.match(/\d+ sn/)[0] + ' içinde cevap vermedi' : 'ulaşılamadı'))
     : h('div', { class: 'srow none' }, h('span', { class: 'ic' }, '–'), h('b', {}, name), h('span', {}, 'bu kelime bu sözlükte yok'));
   box.textContent = '';
   box.append(row('Dil Derneği', st.waiting.dd, !!st.dd, st.errors.dd), row('TDK', st.waiting.tdk, !!st.tdk, st.errors.tdk));
@@ -736,7 +739,7 @@ $('#addLookup').addEventListener('click', () => {
     const o = $('#addOrigin');
     o.hidden = !st.guess.origin_lang;
     o.textContent = '';
-    if (st.guess.origin_lang) o.append(h('b', {}, 'Köken'), st.guess.origin_lang, st.guess.origin_form ? h('i', {}, st.guess.origin_form) : null);
+    if (st.guess.origin_lang) o.append(h('b', {}, 'Köken'), st.guess.origin_lang + ' ', ...(st.guess.origin_form ? [h('i', {}, st.guess.origin_form)] : []));
     // First real definition; TDK lists cross-references as "► sürücü (I)".
     fill('usage', st.tdk?.entries.flatMap(e => e.anlamlar).find(a => !a.anlam.trim().startsWith('►'))?.anlam);
     fill('usage', st.dd?.blocks[0]?.anlamlar[0]?.replace(/^\d+\.\s*/, ''));
